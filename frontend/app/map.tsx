@@ -260,9 +260,15 @@ export default function SmartMap() {
     }
   };
 
-  const filteredLocations = selectedCity 
-    ? locations.filter(loc => loc.il === selectedCity)
-    : locations;
+  const filterLocationsByCity = (city: string) => {
+    setSelectedCity(city);
+  };
+
+  const filteredLocations = applyPriceFilter(
+    selectedCity 
+      ? locations.filter(loc => loc.il === selectedCity)
+      : locations
+  );
 
   return (
     <SafeAreaView style={styles.container}>

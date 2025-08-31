@@ -73,13 +73,13 @@ export default function Index() {
         'Misafir kullanıcılar en fazla 3 sorgulama yapabilir. Lütfen üye olun veya giriş yapın.',
         [
           { text: 'Tamam', style: 'default' },
-          { text: 'Üye Ol', onPress: () => console.log('Navigate to register') },
+          { text: 'Üye Ol', onPress: handleRegister },
         ]
       );
       return;
     }
     // Navigate to query screen
-    console.log('Navigate to guest query');
+    router.push('/query');
   };
 
   const handleLogin = () => {

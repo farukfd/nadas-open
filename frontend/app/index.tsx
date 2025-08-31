@@ -59,25 +59,38 @@ export default function Index() {
       }
 
       if (token) {
-        // Verify token and get user profile
-        const response = await fetch(`${EXPO_BACKEND_URL}/api/user/profile`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        try {
+          // Add timeout to fetch request
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+          
+          const response = await fetch(`${EXPO_BACKEND_URL}/api/user/profile`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            signal: controller.signal,
+          });
 
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        } else {
-          // Token is invalid, remove it
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            const userData = await response.json();
+            setUser(userData);
+          } else {
+            // Token is invalid, remove it
+            await AsyncStorage.removeItem('auth_token');
+          }
+        } catch (fetchError) {
+          console.log('Auth check failed:', fetchError);
+          // Remove invalid token on network error
           await AsyncStorage.removeItem('auth_token');
         }
       }
     } catch (error) {
       console.error('Error checking auth status:', error);
     } finally {
+      // Always set loading to false
       setIsLoading(false);
     }
   };

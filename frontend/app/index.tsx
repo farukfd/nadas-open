@@ -485,9 +485,7 @@ const styles = StyleSheet.create({
   },
   heroBackgroundImage: {
     flex: 1,
-    backgroundColor: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%)',
-    // Simulating the ocean/earth background with gradient
-    background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 30%, #0369a1 70%, #0891b2 100%)',
+    backgroundColor: '#1e40af', // Blue background color
   },
   heroOverlay: {
     flex: 1,

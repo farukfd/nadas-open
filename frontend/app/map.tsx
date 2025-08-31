@@ -80,54 +80,24 @@ export default function SmartMap() {
     try {
       setIsLoading(true);
       
-      // Get all cities first
-      const citiesResponse = await fetch(`${EXPO_BACKEND_URL}/api/locations/cities`);
-      const citiesData = await citiesResponse.json();
+      // Get all locations with coordinates from the map API
+      const response = await fetch(`${EXPO_BACKEND_URL}/api/map/locations`);
+      const data = await response.json();
       
-      if (!citiesResponse.ok) return;
-
-      const allLocations: LocationData[] = [];
-      
-      // Get districts and neighborhoods for each city
-      for (const city of citiesData.cities.slice(0, 5)) { // İlk 5 şehir
-        try {
-          const districtsResponse = await fetch(`${EXPO_BACKEND_URL}/api/locations/districts/${encodeURIComponent(city)}`);
-          const districtsData = await districtsResponse.json();
-          
-          if (districtsResponse.ok && districtsData.districts) {
-            for (const district of districtsData.districts.slice(0, 3)) { // İlk 3 ilçe
-              try {
-                const neighborhoodsResponse = await fetch(
-                  `${EXPO_BACKEND_URL}/api/locations/neighborhoods/${encodeURIComponent(city)}/${encodeURIComponent(district)}`
-                );
-                const neighborhoodsData = await neighborhoodsResponse.json();
-                
-                if (neighborhoodsResponse.ok && neighborhoodsData.neighborhoods) {
-                  for (const neighborhood of neighborhoodsData.neighborhoods.slice(0, 2)) { // İlk 2 mahalle
-                    // Sample koordinatları oluştur (gerçek projede veritabanından gelecek)
-                    const baseCoords = getCityBaseCoordinates(city);
-                    const location: LocationData = {
-                      id: `${city}_${district}_${neighborhood}`,
-                      il: city,
-                      ilce: district,
-                      mahalle: neighborhood,
-                      lat: baseCoords.lat + (Math.random() - 0.5) * 0.1,
-                      lng: baseCoords.lng + (Math.random() - 0.5) * 0.1,
-                    };
-                    allLocations.push(location);
-                  }
-                }
-              } catch (error) {
-                console.error(`Error loading neighborhoods for ${district}:`, error);
-              }
-            }
-          }
-        } catch (error) {
-          console.error(`Error loading districts for ${city}:`, error);
-        }
+      if (response.ok && data.locations) {
+        const mapLocations: LocationData[] = data.locations.map((loc: any) => ({
+          id: loc.mahalle_code || `${loc.il}_${loc.ilce}_${loc.mahalle}`,
+          il: loc.il,
+          ilce: loc.ilce,
+          mahalle: loc.mahalle,
+          lat: loc.lat,
+          lng: loc.lng,
+        }));
+        
+        setLocations(mapLocations);
+      } else {
+        Alert.alert('Hata', 'Konum verileri yüklenemedi.');
       }
-      
-      setLocations(allLocations);
     } catch (error) {
       console.error('Error loading map data:', error);
       Alert.alert('Hata', 'Harita verileri yüklenirken hata oluştu.');

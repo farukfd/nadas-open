@@ -413,16 +413,33 @@ export default function SmartMap() {
               key={location.id}
               style={[
                 styles.locationCard,
-                { borderLeftColor: getPriceColor(location.id) }
+                { borderLeftColor: getPriceColor(location.id) },
+                selectedForCompare.find(loc => loc.id === location.id) && styles.selectedForCompare
               ]}
-              onPress={() => handleLocationPress(location)}
+              onPress={() => {
+                if (compareMode) {
+                  handleLocationForCompare(location);
+                } else {
+                  handleLocationPress(location);
+                }
+              }}
             >
               <View style={styles.locationHeader}>
                 <Text style={styles.locationTitle}>{location.mahalle}</Text>
-                <View style={[
-                  styles.priceIndicator,
-                  { backgroundColor: getPriceColor(location.id) }
-                ]} />
+                <View style={styles.locationActions}>
+                  <TouchableOpacity
+                    style={styles.favoriteButton}
+                    onPress={() => toggleFavorite(location.id)}
+                  >
+                    <Text style={styles.favoriteIcon}>
+                      {favorites.includes(location.id) ? '⭐' : '☆'}
+                    </Text>
+                  </TouchableOpacity>
+                  <View style={[
+                    styles.priceIndicator,
+                    { backgroundColor: getPriceColor(location.id) }
+                  ]} />
+                </View>
               </View>
               
               <Text style={styles.locationSubtitle}>
@@ -440,6 +457,17 @@ export default function SmartMap() {
                 <Text style={styles.locationCoords}>
                   📍 {location.lat.toFixed(3)}, {location.lng.toFixed(3)}
                 </Text>
+              )}
+
+              {compareMode && (
+                <View style={styles.compareIndicator}>
+                  <Text style={styles.compareText}>
+                    {selectedForCompare.find(loc => loc.id === location.id) 
+                      ? '✅ Seçildi' 
+                      : '📊 Karşılaştır'
+                    }
+                  </Text>
+                </View>
               )}
             </TouchableOpacity>
           ))}

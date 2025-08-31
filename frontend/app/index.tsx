@@ -669,20 +669,64 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
-    marginTop: 16,
+    marginTop: 24,
+    paddingHorizontal: 16,
   },
   statItem: {
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#2563eb',
+    color: '#fbbf24', // Orange color like "81 ilde"
   },
   statLabel: {
     fontSize: 12,
-    color: '#64748b',
+    color: '#ffffff',
     marginTop: 4,
+  },
+  propertySelectionBar: {
+    backgroundColor: '#ffffff',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  propertySelectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 12,
+    paddingHorizontal: 16,
+  },
+  propertyScrollView: {
+    paddingHorizontal: 16,
+  },
+  propertySelectButton: {
+    backgroundColor: '#f8fafc',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginRight: 12,
+    alignItems: 'center',
+    minWidth: 80,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  activePropertySelect: {
+    backgroundColor: '#2563eb',
+    borderColor: '#2563eb',
+  },
+  propertySelectIcon: {
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  propertySelectText: {
+    color: '#64748b',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  activePropertySelectText: {
+    color: '#ffffff',
   },
   userStatusCard: {
     backgroundColor: '#dbeafe',

@@ -61,9 +61,12 @@ class BackendTester:
     def test_user_registration(self):
         """Test user registration with individual and corporate types"""
         
+        import time
+        timestamp = str(int(time.time()))
+        
         # Test individual user registration
         individual_user = {
-            "email": "test_individual@example.com",
+            "email": f"test_individual_{timestamp}@example.com",
             "password": "testpass123",
             "first_name": "Ahmet",
             "last_name": "Yılmaz",
@@ -80,7 +83,7 @@ class BackendTester:
         
         # Test corporate user registration
         corporate_user = {
-            "email": "test_corporate@example.com", 
+            "email": f"test_corporate_{timestamp}@example.com", 
             "password": "testpass123",
             "first_name": "Mehmet",
             "last_name": "Özkan",
@@ -92,7 +95,8 @@ class BackendTester:
         success, data, status_code = self.make_request("POST", "/auth/register", corporate_user)
         
         if success and status_code == 200 and "token" in data:
-            self.log_test("Corporate User Registration", True, f"Company: {data.get('user', {}).get('company_name', 'N/A')}")
+            user_data = data.get('user', {})
+            self.log_test("Corporate User Registration", True, f"Company: {user_data.get('company_name', 'N/A')}")
         else:
             self.log_test("Corporate User Registration", False, f"Status: {status_code}, Data: {data}")
     

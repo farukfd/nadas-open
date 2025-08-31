@@ -204,7 +204,7 @@ class BackendTester:
         query_data = {
             "il": "İstanbul",
             "ilce": "Kadıköy",
-            "mahalle": "Fenerbahçe", 
+            "mahalle": "Caddebostan",  # Using actual seeded location
             "property_type": "residential_rent",
             "start_year": 2022,
             "end_year": 2025
@@ -221,11 +221,11 @@ class BackendTester:
             self.log_test("Protected Query", True, f"Location: {location.get('mahalle')}, Price records: {len(price_data)}, Remaining: {remaining}")
         elif status_code == 404:
             # Try with fallback location
-            query_data["mahalle"] = "Merkez"
+            query_data["mahalle"] = "Taksim"  # Another seeded location
             success, data, status_code = self.make_request("POST", "/query/protected", query_data, headers)
             
             if success and status_code == 200:
-                self.log_test("Protected Query (Fallback)", True, f"Found data for Merkez neighborhood")
+                self.log_test("Protected Query (Fallback)", True, f"Found data for Taksim neighborhood")
             else:
                 self.log_test("Protected Query", False, f"Location not found. Status: {status_code}")
         else:

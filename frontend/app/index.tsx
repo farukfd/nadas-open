@@ -247,13 +247,64 @@ export default function Index() {
                   )}
                 </View>
 
+                {/* Quick Stats - EmlakEkspertizi.com Style */}
+                <View style={styles.statsContainer}>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statValue}>81</Text>
+                    <Text style={styles.statLabel}>İl</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statValue}>963</Text>
+                    <Text style={styles.statLabel}>İlçe</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statValue}>6,120+</Text>
+                    <Text style={styles.statLabel}>Veri Noktası</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statValue}>20</Text>
+                    <Text style={styles.statLabel}>Yıl Arşiv</Text>
+                  </View>
+                </View>
+
                 {/* Contact Button */}
                 <TouchableOpacity style={styles.contactButton}>
-                  <Text style={styles.contactButtonText}>Bize Ulaşın</Text>
+                  <Text style={styles.contactButtonText}>📞 Bize Ulaşın</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
+        </View>
+
+        {/* Property Type Selection Bar */}
+        <View style={styles.propertySelectionBar}>
+          <Text style={styles.propertySelectionTitle}>Emlak Türü Seçin</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.propertyScrollView}>
+            <TouchableOpacity style={styles.propertySelectButton}>
+              <Text style={styles.propertySelectIcon}>🏗️</Text>
+              <Text style={styles.propertySelectText}>Arsa</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={[styles.propertySelectButton, styles.activePropertySelect]}>
+              <Text style={styles.propertySelectIcon}>🏠</Text>
+              <Text style={[styles.propertySelectText, styles.activePropertySelectText]}>Konut</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.propertySelectButton}>
+              <Text style={styles.propertySelectIcon}>🏢</Text>
+              <Text style={styles.propertySelectText}>İşyeri</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.propertySelectButton}>
+              <Text style={styles.propertySelectIcon}>🏪</Text>
+              <Text style={styles.propertySelectText}>Dükkan</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.propertySelectButton}>
+              <Text style={styles.propertySelectIcon}>🏭</Text>
+              <Text style={styles.propertySelectText}>Sanayi</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
 
         {/* User Status */}

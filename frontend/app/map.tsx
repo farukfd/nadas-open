@@ -292,6 +292,34 @@ export default function SmartMap() {
           >
             <Text style={styles.controlText}>🇹🇷 Tüm Türkiye</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.controlButton, showHeatmap && styles.activeButton]}
+            onPress={() => setShowHeatmap(!showHeatmap)}
+          >
+            <Text style={styles.controlText}>🔥 Isı Haritası</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.controlButton, compareMode && styles.activeButton]}
+            onPress={toggleCompareMode}
+          >
+            <Text style={styles.controlText}>📊 Karşılaştır</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.controlButton}
+            onPress={() => {
+              const favoriteLocs = locations.filter(loc => favorites.includes(loc.id));
+              if (favoriteLocs.length > 0) {
+                setSelectedCity('');
+              } else {
+                Alert.alert('Bilgi', 'Henüz favori lokasyonunuz yok.');
+              }
+            }}
+          >
+            <Text style={styles.controlText}>⭐ Favoriler ({favorites.length})</Text>
+          </TouchableOpacity>
           
           {cities.map((city) => (
             <TouchableOpacity
@@ -302,6 +330,46 @@ export default function SmartMap() {
               <Text style={styles.controlText}>{city}</Text>
             </TouchableOpacity>
           ))}
+        </ScrollView>
+      </View>
+
+      {/* Price Range Filter */}
+      <View style={styles.filterContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <TouchableOpacity
+            style={[styles.filterButton, !priceRangeFilter && styles.activeFilterButton]}
+            onPress={() => setPriceRangeFilter(null)}
+          >
+            <Text style={styles.filterText}>Tüm Fiyatlar</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.filterButton, priceRangeFilter?.min === 0 && priceRangeFilter?.max === 10000 && styles.activeFilterButton]}
+            onPress={() => setPriceRangeFilter({min: 0, max: 10000})}
+          >
+            <Text style={styles.filterText}>{"< 10K"}</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.filterButton, priceRangeFilter?.min === 10000 && priceRangeFilter?.max === 20000 && styles.activeFilterButton]}
+            onPress={() => setPriceRangeFilter({min: 10000, max: 20000})}
+          >
+            <Text style={styles.filterText}>10K-20K</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.filterButton, priceRangeFilter?.min === 20000 && priceRangeFilter?.max === 30000 && styles.activeFilterButton]}
+            onPress={() => setPriceRangeFilter({min: 20000, max: 30000})}
+          >
+            <Text style={styles.filterText}>20K-30K</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.filterButton, priceRangeFilter?.min === 30000 && priceRangeFilter?.max === 100000 && styles.activeFilterButton]}
+            onPress={() => setPriceRangeFilter({min: 30000, max: 100000})}
+          >
+            <Text style={styles.filterText}>{"> 30K"}</Text>
+          </TouchableOpacity>
         </ScrollView>
       </View>
 

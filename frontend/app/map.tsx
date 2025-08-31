@@ -545,9 +545,19 @@ export default function SmartMap() {
           <View style={styles.modalContent}>
             {selectedLocation && (
               <>
-                <Text style={styles.modalTitle}>
-                  {selectedLocation.mahalle}
-                </Text>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>
+                    {selectedLocation.mahalle}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.modalFavoriteButton}
+                    onPress={() => selectedLocation && toggleFavorite(selectedLocation.id)}
+                  >
+                    <Text style={styles.modalFavoriteIcon}>
+                      {favorites.includes(selectedLocation.id) ? '⭐' : '☆'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
                 <Text style={styles.modalSubtitle}>
                   {selectedLocation.ilce} / {selectedLocation.il}
                 </Text>

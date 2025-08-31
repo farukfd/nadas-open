@@ -191,8 +191,73 @@ export default function SmartMap() {
     setShowLocationModal(true);
   };
 
-  const filterLocationsByCity = (city: string) => {
-    setSelectedCity(city);
+  const loadFavorites = async () => {
+    try {
+      const savedFavorites = await AsyncStorage.getItem('favorite_locations');
+      if (savedFavorites) {
+        setFavorites(JSON.parse(savedFavorites));
+      }
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+    }
+  };
+
+  const toggleFavorite = async (locationId: string) => {
+    try {
+      let newFavorites;
+      if (favorites.includes(locationId)) {
+        newFavorites = favorites.filter(id => id !== locationId);
+      } else {
+        newFavorites = [...favorites, locationId];
+      }
+      setFavorites(newFavorites);
+      await AsyncStorage.setItem('favorite_locations', JSON.stringify(newFavorites));
+    } catch (error) {
+      console.error('Error saving favorites:', error);
+    }
+  };
+
+  const generateHeatmapData = () => {
+    if (!showHeatmap) return [];
+    
+    return locations
+      .filter(loc => priceData[loc.id])
+      .map(loc => {
+        const price = priceData[loc.id].avg_price_per_m2;
+        return {
+          latitude: loc.lat || 0,
+          longitude: loc.lng || 0,
+          weight: Math.min(price / 50000, 1), // Normalize to 0-1
+          intensity: price > 30000 ? 1.0 : price > 20000 ? 0.7 : price > 10000 ? 0.4 : 0.1
+        };
+      });
+  };
+
+  const applyPriceFilter = (locations: LocationData[]) => {
+    if (!priceRangeFilter) return locations;
+    
+    return locations.filter(loc => {
+      const price = priceData[loc.id]?.avg_price_per_m2;
+      if (!price) return true;
+      return price >= priceRangeFilter.min && price <= priceRangeFilter.max;
+    });
+  };
+
+  const toggleCompareMode = () => {
+    setCompareMode(!compareMode);
+    setSelectedForCompare([]);
+  };
+
+  const handleLocationForCompare = (location: LocationData) => {
+    if (!compareMode) return;
+    
+    if (selectedForCompare.find(loc => loc.id === location.id)) {
+      setSelectedForCompare(selectedForCompare.filter(loc => loc.id !== location.id));
+    } else if (selectedForCompare.length < 2) {
+      setSelectedForCompare([...selectedForCompare, location]);
+    } else {
+      Alert.alert('Limit', 'En fazla 2 lokasyon karşılaştırabilirsiniz.');
+    }
   };
 
   const filteredLocations = selectedCity 

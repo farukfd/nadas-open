@@ -344,7 +344,7 @@ export default function SmartMap() {
         <View style={styles.legendItems}>
           <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: '#22c55e' }]} />
-            <Text style={styles.legendText}>< 10K</Text>
+            <Text style={styles.legendText}>{"< 10K"}</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: '#eab308' }]} />
@@ -356,7 +356,7 @@ export default function SmartMap() {
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: '#ef4444' }]} />
-            <Text style={styles.legendText}>> 30K</Text>
+            <Text style={styles.legendText}>{"> 30K"}</Text>
           </View>
         </View>
       </View>

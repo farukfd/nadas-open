@@ -29,11 +29,12 @@ export default function Register() {
   const [phone, setPhone] = useState('');
   const [userType, setUserType] = useState<UserType>('individual');
   const [companyName, setCompanyName] = useState('');
+  const [taxNumber, setTaxNumber] = useState(''); // Vergi numarası
   const [isLoading, setIsLoading] = useState(false);
 
   const handleRegister = async () => {
     // Validation
-    if (!email || !password || !firstName || !lastName) {
+    if (!email || !password || !firstName || !lastName || !phone) {
       Alert.alert('Hata', 'Lütfen zorunlu alanları doldurun.');
       return;
     }
@@ -53,9 +54,24 @@ export default function Register() {
       return;
     }
 
-    if (userType === 'corporate' && !companyName) {
-      Alert.alert('Hata', 'Kurumsal üyelik için şirket adı zorunludur.');
+    // Phone validation
+    const phoneRegex = /^(\+90|0)?[5][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]$/;
+    if (!phoneRegex.test(phone.replace(/\s/g, ''))) {
+      Alert.alert('Hata', 'Geçerli bir telefon numarası girin. (Örn: 0555 123 4567)');
       return;
+    }
+
+    if (userType === 'corporate') {
+      if (!companyName || !taxNumber) {
+        Alert.alert('Hata', 'Kurumsal üyelik için şirket adı ve vergi numarası zorunludur.');
+        return;
+      }
+      
+      // Tax number validation (10 digits)
+      if (!/^\d{10}$/.test(taxNumber)) {
+        Alert.alert('Hata', 'Vergi numarası 10 haneli olmalıdır.');
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -67,8 +83,9 @@ export default function Register() {
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         user_type: userType,
-        phone: phone.trim() || null,
+        phone: phone.trim(),
         company_name: userType === 'corporate' ? companyName.trim() : null,
+        tax_number: userType === 'corporate' ? taxNumber.trim() : null,
       };
 
       const response = await fetch(`${EXPO_BACKEND_URL}/api/auth/register`, {
@@ -86,12 +103,16 @@ export default function Register() {
         await AsyncStorage.setItem('auth_token', data.token);
         await AsyncStorage.setItem('user_data', JSON.stringify(data.user));
         
-        Alert.alert('Başarılı', 'Hesabınız oluşturuldu!', [
-          {
-            text: 'Tamam',
-            onPress: () => router.replace('/'),
-          },
-        ]);
+        Alert.alert(
+          'Hesap Oluşturuldu! 🎉',
+          `Hoş geldiniz ${firstName}!\n\n✅ 5 ücretsiz sorgulama hakkınız bulunmaktadır.\n📱 5. sorgulamadan sonra telefon doğrulama ile +5 sorgu daha kazanabilirsiniz.`,
+          [
+            {
+              text: 'Başlayalım',
+              onPress: () => router.replace('/'),
+            },
+          ]
+        );
       } else {
         Alert.alert('Hata', data.detail || 'Kayıt oluşturulamadı.');
       }
@@ -113,9 +134,9 @@ export default function Register() {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Üye Ol</Text>
+            <Text style={styles.title}>Üyelik Oluştur</Text>
             <Text style={styles.subtitle}>
-              Hesap oluşturun ve emlak endeksine erişin
+              EmlakEkspertizi.com'a hoş geldiniz
             </Text>
           </View>
 
@@ -129,10 +150,15 @@ export default function Register() {
                   selectedValue={userType}
                   onValueChange={(itemValue) => setUserType(itemValue as UserType)}
                   style={styles.picker}
-                  dropdownIconColor="#fff"
                 >
-                  <Picker.Item label="Bireysel Üyelik (5 Ücretsiz Sorgulama)" value="individual" />
-                  <Picker.Item label="Kurumsal Üyelik (5 Ücretsiz Sorgulama)" value="corporate" />
+                  <Picker.Item 
+                    label="👤 Bireysel Üyelik (5 Ücretsiz Sorgulama)" 
+                    value="individual" 
+                  />
+                  <Picker.Item 
+                    label="🏢 Kurumsal Üyelik (5 Ücretsiz Sorgulama)" 
+                    value="corporate" 
+                  />
                 </Picker>
               </View>
             </View>
@@ -145,7 +171,7 @@ export default function Register() {
                 value={firstName}
                 onChangeText={setFirstName}
                 placeholder="Adınız"
-                placeholderTextColor="#6b7280"
+                placeholderTextColor="#8892a0"
                 autoCapitalize="words"
               />
             </View>
@@ -157,24 +183,39 @@ export default function Register() {
                 value={lastName}
                 onChangeText={setLastName}
                 placeholder="Soyadınız"
-                placeholderTextColor="#6b7280"
+                placeholderTextColor="#8892a0"
                 autoCapitalize="words"
               />
             </View>
 
-            {/* Company Name for Corporate Users */}
+            {/* Corporate Fields */}
             {userType === 'corporate' && (
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Şirket Adı *</Text>
-                <TextInput
-                  style={styles.input}
-                  value={companyName}
-                  onChangeText={setCompanyName}
-                  placeholder="Şirket adınız"
-                  placeholderTextColor="#6b7280"
-                  autoCapitalize="words"
-                />
-              </View>
+              <>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Şirket Adı *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={companyName}
+                    onChangeText={setCompanyName}
+                    placeholder="Şirket adınız"
+                    placeholderTextColor="#8892a0"
+                    autoCapitalize="words"
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Vergi Numarası *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={taxNumber}
+                    onChangeText={setTaxNumber}
+                    placeholder="10 haneli vergi numarası"
+                    placeholderTextColor="#8892a0"
+                    keyboardType="numeric"
+                    maxLength={10}
+                  />
+                </View>
+              </>
             )}
 
             {/* Contact Information */}
@@ -185,7 +226,7 @@ export default function Register() {
                 value={email}
                 onChangeText={setEmail}
                 placeholder="ornek@email.com"
-                placeholderTextColor="#6b7280"
+                placeholderTextColor="#8892a0"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -193,15 +234,18 @@ export default function Register() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Telefon</Text>
+              <Text style={styles.label}>Telefon Numarası *</Text>
               <TextInput
                 style={styles.input}
                 value={phone}
                 onChangeText={setPhone}
-                placeholder="+90 555 123 4567"
-                placeholderTextColor="#6b7280"
+                placeholder="0555 123 4567"
+                placeholderTextColor="#8892a0"
                 keyboardType="phone-pad"
               />
+              <Text style={styles.helpText}>
+                📱 Telefon doğrulama ile +5 ek sorgulama hakkı kazanabilirsiniz
+              </Text>
             </View>
 
             {/* Password */}
@@ -212,7 +256,7 @@ export default function Register() {
                 value={password}
                 onChangeText={setPassword}
                 placeholder="En az 6 karakter"
-                placeholderTextColor="#6b7280"
+                placeholderTextColor="#8892a0"
                 secureTextEntry
               />
             </View>
@@ -224,7 +268,7 @@ export default function Register() {
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Şifrenizi tekrar girin"
-                placeholderTextColor="#6b7280"
+                placeholderTextColor="#8892a0"
                 secureTextEntry
               />
             </View>
@@ -239,15 +283,30 @@ export default function Register() {
               </Text>
             </TouchableOpacity>
 
-            {/* Info Box */}
-            <View style={styles.infoBox}>
-              <Text style={styles.infoTitle}>Üyelik Avantajları:</Text>
-              <Text style={styles.infoText}>
-                • {userType === 'individual' ? 'Bireysel' : 'Kurumsal'} üyeler 5 ücretsiz sorgulama hakkı{'\n'}
-                • Detaylı demografik analizler{'\n'}
-                • 20 yıllık geçmiş veri arşivi{'\n'}
-                • Karşılaştırma araçları{'\n'}
-                • Favori bölgeler ve fiyat alarmları
+            {/* Benefit Info */}
+            <View style={styles.benefitBox}>
+              <Text style={styles.benefitTitle}>🎁 Üyelik Avantajlarınız:</Text>
+              <Text style={styles.benefitText}>
+                ✅ İlk kayıtta 5 ücretsiz sorgulama{'\n'}
+                📱 Telefon doğrulama ile +5 ek sorgulama{'\n'}
+                🗺️ Akıllı harita ve detaylı analizler{'\n'}
+                🔔 Fiyat alarmları ve bildirimler{'\n'}
+                📊 20 yıllık geçmiş veri arşivi{'\n'}
+                🔒 Güvenli ve profesyonel hizmet
+              </Text>
+            </View>
+
+            {/* Legal Notice */}
+            <View style={styles.legalBox}>
+              <Text style={styles.legalText}>
+                Üye olarak{' '}
+                <Text style={styles.legalLink}>Kullanım Şartları</Text>
+                {' '}ve{' '}
+                <Text style={styles.legalLink}>Gizlilik Politikası</Text>
+                {'nı kabul etmiş olursunuz.'}
+              </Text>
+              <Text style={styles.legalSubtext}>
+                Bu hizmet Nadas.com.tr güvencesiyle sunulmaktadır.
               </Text>
             </View>
           </View>
@@ -256,7 +315,7 @@ export default function Register() {
           <View style={styles.footer}>
             <Text style={styles.footerText}>Zaten hesabınız var mı?</Text>
             <TouchableOpacity onPress={() => router.push('/login')}>
-              <Text style={styles.linkText}>Giriş Yap</Text>
+              <Text style={styles.linkText}>Giriş Yapın</Text>
             </TouchableOpacity>
           </View>
 
@@ -271,6 +330,155 @@ export default function Register() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 30,
+  },
+  header: {
+    padding: 24,
+    alignItems: 'center',
+    backgroundColor: '#2563eb',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#bfdbfe',
+    textAlign: 'center',
+  },
+  form: {
+    padding: 16,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  helpText: {
+    fontSize: 12,
+    color: '#2563eb',
+    marginTop: 4,
+  },
+  pickerContainer: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  picker: {
+    color: '#1e293b',
+    backgroundColor: 'transparent',
+  },
+  registerButton: {
+    backgroundColor: '#2563eb',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  disabledButton: {
+    backgroundColor: '#94a3b8',
+  },
+  registerButtonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  benefitBox: {
+    backgroundColor: '#dbeafe',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#2563eb',
+  },
+  benefitTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1e40af',
+    marginBottom: 8,
+  },
+  benefitText: {
+    fontSize: 14,
+    color: '#1e40af',
+    lineHeight: 20,
+  },
+  legalBox: {
+    backgroundColor: '#f8fafc',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  legalText: {
+    fontSize: 12,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 16,
+    marginBottom: 8,
+  },
+  legalLink: {
+    color: '#2563eb',
+    fontWeight: '600',
+  },
+  legalSubtext: {
+    fontSize: 11,
+    color: '#94a3b8',
+    textAlign: 'center',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
+    paddingHorizontal: 16,
+  },
+  footerText: {
+    color: '#64748b',
+    fontSize: 16,
+    marginRight: 8,
+  },
+  linkText: {
+    color: '#2563eb',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  backButton: {
+    alignItems: 'center',
+    marginTop: 16,
+    paddingHorizontal: 16,
+  },
+  backButtonText: {
+    color: '#64748b',
+    fontSize: 16,
+  },
+});
 
 const styles = StyleSheet.create({
   container: {

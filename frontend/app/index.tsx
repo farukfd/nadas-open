@@ -173,18 +173,24 @@ export default function Index() {
           
           <View style={styles.featureGrid}>
             <View style={styles.featureCard}>
+              <Text style={styles.featureIcon}>🗺️</Text>
+              <Text style={styles.featureTitle}>Akıllı Harita</Text>
+              <Text style={styles.featureDescription}>
+                Türkiye özel harita sistemi ile fiyat görselleştirme
+              </Text>
+              <TouchableOpacity 
+                style={styles.featureButton}
+                onPress={() => router.push('/map')}
+              >
+                <Text style={styles.featureButtonText}>Haritayı Aç</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.featureCard}>
               <Text style={styles.featureIcon}>📊</Text>
               <Text style={styles.featureTitle}>Fiyat Endeksi</Text>
               <Text style={styles.featureDescription}>
                 2005-2025 arası mahalle bazında aylık fiyat trendleri
-              </Text>
-            </View>
-
-            <View style={styles.featureCard}>
-              <Text style={styles.featureIcon}>🗺️</Text>
-              <Text style={styles.featureTitle}>Harita Görünümü</Text>
-              <Text style={styles.featureDescription}>
-                İnteraktif harita üzerinde fiyat analizi
               </Text>
             </View>
 

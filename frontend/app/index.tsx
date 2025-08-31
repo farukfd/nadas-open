@@ -84,12 +84,12 @@ export default function Index() {
 
   const handleLogin = () => {
     // Navigate to login screen
-    console.log('Navigate to login');
+    router.push('/login');
   };
 
   const handleRegister = () => {
     // Navigate to register screen
-    console.log('Navigate to register');
+    router.push('/register');
   };
 
   const handleQuery = () => {
@@ -108,7 +108,7 @@ export default function Index() {
     }
     
     // Navigate to protected query screen
-    console.log('Navigate to protected query');
+    router.push('/query');
   };
 
   const handleLogout = async () => {

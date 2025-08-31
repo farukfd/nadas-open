@@ -651,6 +651,25 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
   },
+  filterContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#2d3748',
+  },
+  filterButton: {
+    backgroundColor: '#374151',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginRight: 8,
+  },
+  activeFilterButton: {
+    backgroundColor: '#f97316',
+  },
+  filterText: {
+    color: '#fff',
+    fontSize: 11,
+  },
   propertyTypeContainer: {
     paddingHorizontal: 16,
     paddingVertical: 8,

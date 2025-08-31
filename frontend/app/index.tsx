@@ -203,11 +203,17 @@ export default function Index() {
             </View>
 
             <View style={styles.featureCard}>
-              <Text style={styles.featureIcon}>📈</Text>
-              <Text style={styles.featureTitle}>Karşılaştırma</Text>
+              <Text style={styles.featureIcon}>🔔</Text>
+              <Text style={styles.featureTitle}>Fiyat Alarmları</Text>
               <Text style={styles.featureDescription}>
-                Farklı bölgeleri karşılaştırın
+                İstediğiniz fiyat seviyelerinde bildirim alın
               </Text>
+              <TouchableOpacity 
+                style={styles.featureButton}
+                onPress={() => router.push('/notifications')}
+              >
+                <Text style={styles.featureButtonText}>Alarm Kur</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>

@@ -729,6 +729,64 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  locationActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  favoriteButton: {
+    marginRight: 8,
+    padding: 4,
+  },
+  favoriteIcon: {
+    fontSize: 16,
+  },
+  selectedForCompare: {
+    borderColor: '#4f9eff',
+    borderWidth: 2,
+    backgroundColor: 'rgba(79, 158, 255, 0.1)',
+  },
+  compareIndicator: {
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  compareText: {
+    color: '#4f9eff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  comparePanel: {
+    backgroundColor: '#4f9eff',
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  comparePanelTitle: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  compareButton: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  compareButtonText: {
+    color: '#4f9eff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  heatmapInfo: {
+    backgroundColor: '#f97316',
+    padding: 12,
+    alignItems: 'center',
+  },
+  heatmapInfoText: {
+    color: '#fff',
+    fontSize: 12,
+    textAlign: 'center',
+  },
   locationTitle: {
     color: '#fff',
     fontSize: 16,

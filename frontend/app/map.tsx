@@ -62,6 +62,7 @@ export default function SmartMap() {
   useEffect(() => {
     loadMapData();
     loadCities();
+    loadFavorites();
   }, []);
 
   useEffect(() => {

@@ -379,6 +379,18 @@ const styles = StyleSheet.create({
     color: '#8892a0',
     textAlign: 'center',
     lineHeight: 16,
+    marginBottom: 8,
+  },
+  featureButton: {
+    backgroundColor: '#4f9eff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  featureButtonText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '600',
   },
   actionContainer: {
     padding: 16,

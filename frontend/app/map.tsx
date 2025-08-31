@@ -53,6 +53,11 @@ export default function SmartMap() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCity, setSelectedCity] = useState('');
   const [cities, setCities] = useState<string[]>([]);
+  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [priceRangeFilter, setPriceRangeFilter] = useState<{min: number, max: number} | null>(null);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedForCompare, setSelectedForCompare] = useState<LocationData[]>([]);
 
   useEffect(() => {
     loadMapData();

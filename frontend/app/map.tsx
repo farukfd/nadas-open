@@ -482,7 +482,36 @@ export default function SmartMap() {
         )}
       </ScrollView>
 
-      {/* Price Legend */}
+      {/* Karşılaştırma Bilgi Paneli */}
+      {compareMode && (
+        <View style={styles.comparePanel}>
+          <Text style={styles.comparePanelTitle}>
+            📊 Karşılaştırma Modu ({selectedForCompare.length}/2)
+          </Text>
+          {selectedForCompare.length === 2 && (
+            <TouchableOpacity
+              style={styles.compareButton}
+              onPress={() => {
+                Alert.alert(
+                  'Karşılaştırma Sonucu',
+                  `${selectedForCompare[0].mahalle}: ${formatPrice(priceData[selectedForCompare[0].id]?.avg_price_per_m2)}/m²\n\n${selectedForCompare[1].mahalle}: ${formatPrice(priceData[selectedForCompare[1].id]?.avg_price_per_m2)}/m²\n\nFark: ${formatPrice(Math.abs((priceData[selectedForCompare[0].id]?.avg_price_per_m2 || 0) - (priceData[selectedForCompare[1].id]?.avg_price_per_m2 || 0)))}/m²`
+                );
+              }}
+            >
+              <Text style={styles.compareButtonText}>Karşılaştır</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* Isı Haritası Açıklama */}
+      {showHeatmap && (
+        <View style={styles.heatmapInfo}>
+          <Text style={styles.heatmapInfoText}>
+            🔥 Isı Haritası: Kırmızı alanlar yüksek fiyat, mavi alanlar düşük fiyat gösterir
+          </Text>
+        </View>
+      )}
       <View style={styles.legend}>
         <Text style={styles.legendTitle}>Fiyat Aralığı (TL/m²)</Text>
         <View style={styles.legendItems}>

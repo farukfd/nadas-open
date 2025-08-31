@@ -167,7 +167,7 @@ class BackendTester:
         query_data = {
             "il": "İstanbul",
             "ilce": "Kadıköy", 
-            "mahalle": "Fenerbahçe",
+            "mahalle": "Moda",  # Using actual seeded location
             "property_type": "residential_sale",
             "start_year": 2020,
             "end_year": 2025
@@ -183,12 +183,12 @@ class BackendTester:
             
             self.log_test("Guest Query", True, f"Location: {location.get('mahalle')}, Price records: {len(price_data)}, Remaining queries: {remaining}")
         elif status_code == 404:
-            # Try with a different location that might exist
-            query_data["mahalle"] = "Merkez"  # Common neighborhood name
+            # Try with a different seeded location
+            query_data["mahalle"] = "Galata"  # Another seeded location
             success, data, status_code = self.make_request("POST", "/query/guest", query_data)
             
             if success and status_code == 200:
-                self.log_test("Guest Query (Fallback)", True, f"Found data for Merkez neighborhood")
+                self.log_test("Guest Query (Fallback)", True, f"Found data for Galata neighborhood")
             else:
                 self.log_test("Guest Query", False, f"Location not found even with fallback. Status: {status_code}")
         else:

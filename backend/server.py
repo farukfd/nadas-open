@@ -303,6 +303,50 @@ async def get_neighborhoods(city: str, district: str):
     neighborhoods = await db.locations.find({"il": city, "ilce": district}).distinct("mahalle")
     return {"neighborhoods": sorted(neighborhoods)}
 
+# Map endpoints
+@api_router.get("/map/locations")
+async def get_map_locations():
+    """Get all locations with coordinates for map display"""
+    locations = await db.locations.find(
+        {"lat": {"$exists": True, "$ne": None}, "lng": {"$exists": True, "$ne": None}},
+        {"_id": 0}
+    ).to_list(1000)
+    return {"locations": locations}
+
+@api_router.get("/map/locations/{city}")
+async def get_city_map_locations(city: str):
+    """Get locations with coordinates for a specific city"""
+    locations = await db.locations.find(
+        {
+            "il": city,
+            "lat": {"$exists": True, "$ne": None}, 
+            "lng": {"$exists": True, "$ne": None}
+        },
+        {"_id": 0}
+    ).to_list(1000)
+    return {"locations": locations}
+
+@api_router.post("/map/price-data")
+async def get_map_price_data(location_codes: List[str], property_type: PropertyType):
+    """Get latest price data for multiple locations"""
+    price_data = {}
+    
+    for location_code in location_codes:
+        latest_price = await db.price_indices.find_one(
+            {"location_code": location_code, "property_type": property_type.value},
+            sort=[("year", -1), ("month", -1)]
+        )
+        
+        if latest_price:
+            price_data[location_code] = {
+                "avg_price_per_m2": latest_price["avg_price_per_m2"],
+                "year": latest_price["year"],
+                "month": latest_price["month"],
+                "transaction_count": latest_price.get("transaction_count", 0)
+            }
+    
+    return {"price_data": price_data}
+
 # User profile endpoint
 @api_router.get("/user/profile")
 async def get_user_profile(current_user: Dict = Depends(get_current_user)):

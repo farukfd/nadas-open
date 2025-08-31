@@ -9,11 +9,10 @@ import {
   Dimensions,
   Modal,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import MapView, { Marker, Region, Heatmap, Circle } from 'react-native-maps';
 import { router } from 'expo-router';
-import SuperCluster from 'supercluster';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EXPO_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';

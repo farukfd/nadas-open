@@ -166,67 +166,79 @@ export default function Index() {
           )}
         </View>
 
-        {/* Hero Section */}
+        {/* Hero Section with Background Image */}
         <View style={styles.heroSection}>
-          <Text style={styles.heroTitle}>
-            Türkiye'nin En Kapsamlı{'\n'}Emlak Endeks Sistemi
-          </Text>
-          <Text style={styles.heroSubtitle}>
-            2005-2025 arası 20 yıllık veri ile profesyonel emlak değerleme hizmeti
-          </Text>
+          <View style={styles.heroBackgroundImage}>
+            {/* Background image will be handled via ImageBackground if needed */}
+            <View style={styles.heroOverlay}>
+              <View style={styles.heroContent}>
+                <Text style={styles.heroStats}>81 <Text style={styles.heroStatsText}>ilde</Text></Text>
+                <Text style={styles.heroTitle}>
+                  Türkiye'nin Emlak{'\n'}Değerlendirme Merkezi
+                </Text>
 
-          {/* Google-style Search */}
-          <View style={styles.searchContainer}>
-            <View style={styles.searchInputContainer}>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="İl, İlçe veya Mahalle arayın... (Örn: İstanbul Arnavutköy)"
-                placeholderTextColor="#8892a0"
-                value={searchQuery}
-                onChangeText={(text) => {
-                  setSearchQuery(text);
-                  handleSearch(text);
-                }}
-                autoCapitalize="words"
-              />
-              <TouchableOpacity style={styles.searchButton}>
-                <Text style={styles.searchIcon}>🔍</Text>
-              </TouchableOpacity>
-            </View>
+                {/* Property Type Buttons */}
+                <View style={styles.propertyTypeContainer}>
+                  <TouchableOpacity style={styles.propertyTypeButton}>
+                    <Text style={styles.propertyTypeIcon}>🏗️</Text>
+                    <Text style={styles.propertyTypeText}>Arsa</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity style={styles.propertyTypeButton}>
+                    <Text style={styles.propertyTypeIcon}>🏠</Text>
+                    <Text style={styles.propertyTypeText}>Konut</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity style={styles.propertyTypeButton}>
+                    <Text style={styles.propertyTypeIcon}>🏢</Text>
+                    <Text style={styles.propertyTypeText}>İşyeri</Text>
+                  </TouchableOpacity>
+                </View>
 
-            {/* Search Results */}
-            {showResults && searchResults.length > 0 && (
-              <View style={styles.searchResults}>
-                <FlatList
-                  data={searchResults}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.searchResultItem}
-                      onPress={() => handleResultSelect(item)}
-                    >
-                      <Text style={styles.searchResultText}>📍 {item.full_address}</Text>
+                {/* Google-style Search */}
+                <View style={styles.searchContainer}>
+                  <View style={styles.searchInputContainer}>
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder="İl, İlçe veya Mahalle arayın... (Örn: İstanbul Arnavutköy)"
+                      placeholderTextColor="rgba(255,255,255,0.7)"
+                      value={searchQuery}
+                      onChangeText={(text) => {
+                        setSearchQuery(text);
+                        handleSearch(text);
+                      }}
+                      autoCapitalize="words"
+                    />
+                    <TouchableOpacity style={styles.searchButton}>
+                      <Text style={styles.searchIcon}>🔍</Text>
                     </TouchableOpacity>
-                  )}
-                  scrollEnabled={false}
-                />
-              </View>
-            )}
-          </View>
+                  </View>
 
-          {/* Quick Stats */}
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>17</Text>
-              <Text style={styles.statLabel}>Şehir</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>6,120+</Text>
-              <Text style={styles.statLabel}>Veri Noktası</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>20</Text>
-              <Text style={styles.statLabel}>Yıl Arşiv</Text>
+                  {/* Search Results */}
+                  {showResults && searchResults.length > 0 && (
+                    <View style={styles.searchResults}>
+                      <FlatList
+                        data={searchResults}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                          <TouchableOpacity
+                            style={styles.searchResultItem}
+                            onPress={() => handleResultSelect(item)}
+                          >
+                            <Text style={styles.searchResultText}>📍 {item.full_address}</Text>
+                          </TouchableOpacity>
+                        )}
+                        scrollEnabled={false}
+                      />
+                    </View>
+                  )}
+                </View>
+
+                {/* Contact Button */}
+                <TouchableOpacity style={styles.contactButton}>
+                  <Text style={styles.contactButtonText}>Bize Ulaşın</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>

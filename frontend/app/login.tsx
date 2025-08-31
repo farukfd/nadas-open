@@ -54,12 +54,13 @@ export default function Login() {
         await AsyncStorage.setItem('auth_token', data.token);
         await AsyncStorage.setItem('user_data', JSON.stringify(data.user));
         
-        Alert.alert('Başarılı', 'Giriş yapıldı!', [
-          {
-            text: 'Tamam',
-            onPress: () => router.replace('/'),
-          },
-        ]);
+        // Navigate to home and force refresh
+        router.replace('/');
+        
+        // Show success message
+        setTimeout(() => {
+          Alert.alert('Başarılı! 🎉', `Hoş geldiniz ${data.user.first_name}!`);
+        }, 500);
       } else {
         Alert.alert('Hata', data.detail || 'Giriş yapılamadı.');
       }

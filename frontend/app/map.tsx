@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -23,10 +23,9 @@ interface LocationData {
   il: string;
   ilce: string;
   mahalle: string;
-  lat: number;
-  lng: number;
+  lat?: number;
+  lng?: number;
   avg_price?: number;
-  property_count?: number;
 }
 
 interface PriceData {
@@ -46,27 +45,18 @@ const PROPERTY_TYPE_LABELS = {
 };
 
 export default function SmartMap() {
-  const mapRef = useRef<MapView>(null);
   const [locations, setLocations] = useState<LocationData[]>([]);
   const [priceData, setPriceData] = useState<{ [key: string]: PriceData }>({});
   const [selectedPropertyType, setSelectedPropertyType] = useState<PropertyType>('residential_sale');
-  const [mapType, setMapType] = useState<'standard' | 'hybrid' | 'satellite'>('standard');
-  const [showHeatmap, setShowHeatmap] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [userLocation, setUserLocation] = useState<Region | null>(null);
-
-  // Türkiye'nin merkez koordinatları
-  const [region, setRegion] = useState<Region>({
-    latitude: 39.9334,  // Türkiye merkezi
-    longitude: 32.8597,
-    latitudeDelta: 8.0,
-    longitudeDelta: 8.0,
-  });
+  const [selectedCity, setSelectedCity] = useState('');
+  const [cities, setCities] = useState<string[]>([]);
 
   useEffect(() => {
     loadMapData();
+    loadCities();
   }, []);
 
   useEffect(() => {
@@ -75,11 +65,23 @@ export default function SmartMap() {
     }
   }, [selectedPropertyType, locations]);
 
+  const loadCities = async () => {
+    try {
+      const response = await fetch(`${EXPO_BACKEND_URL}/api/locations/cities`);
+      const data = await response.json();
+      if (response.ok) {
+        setCities(data.cities);
+      }
+    } catch (error) {
+      console.error('Error loading cities:', error);
+    }
+  };
+
   const loadMapData = async () => {
     try {
       setIsLoading(true);
       
-      // Get all locations with coordinates from the map API
+      // Veritabanından gerçek lokasyon verilerini al
       const response = await fetch(`${EXPO_BACKEND_URL}/api/map/locations`);
       const data = await response.json();
       
@@ -105,23 +107,13 @@ export default function SmartMap() {
     }
   };
 
-  const getCityBaseCoordinates = (city: string) => {
-    const cityCoords: { [key: string]: { lat: number; lng: number } } = {
-      'İstanbul': { lat: 41.0082, lng: 28.9784 },
-      'Ankara': { lat: 39.9334, lng: 32.8597 },
-      'İzmir': { lat: 38.4237, lng: 27.1428 },
-      'Bursa': { lat: 40.1826, lng: 29.0665 },
-      'Antalya': { lat: 36.8841, lng: 30.7056 },
-    };
-    return cityCoords[city] || cityCoords['Ankara'];
-  };
-
   const loadPriceData = async () => {
     try {
       const token = await AsyncStorage.getItem('auth_token');
       const priceDataMap: { [key: string]: PriceData } = {};
       
-      for (const location of locations.slice(0, 10)) { // İlk 10 lokasyon için fiyat verisi
+      // İlk 10 lokasyon için fiyat verisi al
+      for (const location of locations.slice(0, 10)) {
         try {
           const queryData = {
             il: location.il,
@@ -169,15 +161,14 @@ export default function SmartMap() {
     }
   };
 
-  const getMarkerColor = (locationId: string): string => {
+  const getPriceColor = (locationId: string): string => {
     const price = priceData[locationId]?.avg_price_per_m2;
-    if (!price) return '#8892a0'; // Gri - veri yok
+    if (!price) return '#8892a0'; 
     
-    // Fiyat aralıklarına göre renk
-    if (price < 10000) return '#22c55e'; // Yeşil - Düşük
-    if (price < 20000) return '#eab308'; // Sarı - Orta
-    if (price < 30000) return '#f97316'; // Turuncu - Yüksek
-    return '#ef4444'; // Kırmızı - Çok yüksek
+    if (price < 10000) return '#22c55e'; 
+    if (price < 20000) return '#eab308'; 
+    if (price < 30000) return '#f97316'; 
+    return '#ef4444'; 
   };
 
   const formatPrice = (price?: number) => {
@@ -189,39 +180,18 @@ export default function SmartMap() {
     }).format(price);
   };
 
-  const handleMarkerPress = (location: LocationData) => {
+  const handleLocationPress = (location: LocationData) => {
     setSelectedLocation(location);
     setShowLocationModal(true);
   };
 
-  const zoomToTurkey = () => {
-    setRegion({
-      latitude: 39.9334,
-      longitude: 32.8597,
-      latitudeDelta: 8.0,
-      longitudeDelta: 8.0,
-    });
+  const filterLocationsByCity = (city: string) => {
+    setSelectedCity(city);
   };
 
-  const zoomToCity = (city: string) => {
-    const coords = getCityBaseCoordinates(city);
-    setRegion({
-      latitude: coords.lat,
-      longitude: coords.lng,
-      latitudeDelta: 0.5,
-      longitudeDelta: 0.5,
-    });
-  };
-
-  const generateHeatmapData = () => {
-    return locations
-      .filter(loc => priceData[loc.id])
-      .map(loc => ({
-        latitude: loc.lat,
-        longitude: loc.lng,
-        weight: Math.min(priceData[loc.id].avg_price_per_m2 / 50000, 1), // Normalize to 0-1
-      }));
-  };
+  const filteredLocations = selectedCity 
+    ? locations.filter(loc => loc.il === selectedCity)
+    : locations;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -236,36 +206,25 @@ export default function SmartMap() {
         <View style={styles.headerRight} />
       </View>
 
-      {/* Map Controls */}
+      {/* Controls */}
       <View style={styles.controls}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <TouchableOpacity 
-            style={[styles.controlButton, { backgroundColor: showHeatmap ? '#4f9eff' : '#2d3748' }]}
-            onPress={() => setShowHeatmap(!showHeatmap)}
+            style={[styles.controlButton, selectedCity === '' && styles.activeButton]}
+            onPress={() => filterLocationsByCity('')}
           >
-            <Text style={styles.controlText}>🔥 Isı Haritası</Text>
+            <Text style={styles.controlText}>🇹🇷 Tüm Türkiye</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity 
-            style={styles.controlButton}
-            onPress={zoomToTurkey}
-          >
-            <Text style={styles.controlText}>🇹🇷 Türkiye</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.controlButton}
-            onPress={() => zoomToCity('İstanbul')}
-          >
-            <Text style={styles.controlText}>🏙️ İstanbul</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.controlButton}
-            onPress={() => zoomToCity('Ankara')}
-          >
-            <Text style={styles.controlText}>🏛️ Ankara</Text>
-          </TouchableOpacity>
+          {cities.map((city) => (
+            <TouchableOpacity
+              key={city}
+              style={[styles.controlButton, selectedCity === city && styles.activeButton]}
+              onPress={() => filterLocationsByCity(city)}
+            >
+              <Text style={styles.controlText}>{city}</Text>
+            </TouchableOpacity>
+          ))}
         </ScrollView>
       </View>
 
@@ -292,55 +251,67 @@ export default function SmartMap() {
         </ScrollView>
       </View>
 
-      {/* Map */}
-      <MapView
-        ref={mapRef}
-        style={styles.map}
-        region={region}
-        onRegionChangeComplete={setRegion}
-        mapType={mapType}
-        showsUserLocation={true}
-        showsMyLocationButton={true}
-        toolbarEnabled={false}
-      >
-        {/* Markers */}
-        {locations.map((location) => (
-          <Marker
-            key={location.id}
-            coordinate={{
-              latitude: location.lat,
-              longitude: location.lng,
-            }}
-            onPress={() => handleMarkerPress(location)}
-            pinColor={getMarkerColor(location.id)}
-          >
-            <View style={[
-              styles.customMarker,
-              { backgroundColor: getMarkerColor(location.id) }
-            ]}>
-              <Text style={styles.markerPrice}>
+      {/* Map Alternative - Location Grid */}
+      <ScrollView style={styles.mapContainer}>
+        <View style={styles.statsHeader}>
+          <Text style={styles.statsTitle}>
+            {selectedCity ? `${selectedCity} Bölgeleri` : 'Türkiye Emlak Haritası'}
+          </Text>
+          <Text style={styles.statsSubtitle}>
+            {filteredLocations.length} lokasyon • {PROPERTY_TYPE_LABELS[selectedPropertyType]}
+          </Text>
+        </View>
+
+        <View style={styles.locationGrid}>
+          {filteredLocations.map((location) => (
+            <TouchableOpacity
+              key={location.id}
+              style={[
+                styles.locationCard,
+                { borderLeftColor: getPriceColor(location.id) }
+              ]}
+              onPress={() => handleLocationPress(location)}
+            >
+              <View style={styles.locationHeader}>
+                <Text style={styles.locationTitle}>{location.mahalle}</Text>
+                <View style={[
+                  styles.priceIndicator,
+                  { backgroundColor: getPriceColor(location.id) }
+                ]} />
+              </View>
+              
+              <Text style={styles.locationSubtitle}>
+                {location.ilce} / {location.il}
+              </Text>
+              
+              <Text style={styles.locationPrice}>
                 {priceData[location.id] 
-                  ? `${Math.round(priceData[location.id].avg_price_per_m2 / 1000)}K`
-                  : '?'
+                  ? formatPrice(priceData[location.id].avg_price_per_m2) + '/m²'
+                  : 'Fiyat verisi yükleniyor...'
                 }
               </Text>
-            </View>
-          </Marker>
-        ))}
+              
+              {location.lat && location.lng && (
+                <Text style={styles.locationCoords}>
+                  📍 {location.lat.toFixed(3)}, {location.lng.toFixed(3)}
+                </Text>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
 
-        {/* Heatmap */}
-        {showHeatmap && priceData && (
-          <Heatmap
-            points={generateHeatmapData()}
-            opacity={0.7}
-            radius={50}
-          />
+        {filteredLocations.length === 0 && !isLoading && (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              {selectedCity ? `${selectedCity} için veri bulunamadı` : 'Konum verisi bulunamadı'}
+            </Text>
+          </View>
         )}
-      </MapView>
+      </ScrollView>
 
       {/* Price Legend */}
       <View style={styles.legend}>
-        <Text style={styles.legendTitle}>Fiyat Aralığı (m²)</Text>
+        <Text style={styles.legendTitle}>Fiyat Aralığı (TL/m²)</Text>
         <View style={styles.legendItems}>
           <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: '#22c55e' }]} />
@@ -387,6 +358,18 @@ export default function SmartMap() {
                   <Text style={styles.modalPrice}>
                     {formatPrice(priceData[selectedLocation.id]?.avg_price_per_m2)} / m²
                   </Text>
+                  
+                  {selectedLocation.lat && selectedLocation.lng && (
+                    <>
+                      <Text style={styles.modalInfoTitle}>Konum Bilgisi</Text>
+                      <Text style={styles.modalInfoText}>
+                        Enlem: {selectedLocation.lat.toFixed(6)}
+                      </Text>
+                      <Text style={styles.modalInfoText}>
+                        Boylam: {selectedLocation.lng.toFixed(6)}
+                      </Text>
+                    </>
+                  )}
                 </View>
 
                 <View style={styles.modalActions}>
@@ -394,7 +377,6 @@ export default function SmartMap() {
                     style={styles.modalButton}
                     onPress={() => {
                       setShowLocationModal(false);
-                      // Navigate to detailed query for this location
                       router.push('/query');
                     }}
                   >
@@ -416,7 +398,7 @@ export default function SmartMap() {
 
       {isLoading && (
         <View style={styles.loadingOverlay}>
-          <Text style={styles.loadingText}>Harita yükleniyor...</Text>
+          <Text style={styles.loadingText}>Harita verileri yükleniyor...</Text>
         </View>
       )}
     </SafeAreaView>
@@ -460,6 +442,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginRight: 8,
   },
+  activeButton: {
+    backgroundColor: '#4f9eff',
+  },
   controlText: {
     color: '#fff',
     fontSize: 12,
@@ -487,28 +472,82 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
-  map: {
+  mapContainer: {
+    flex: 1,
+    backgroundColor: '#0f1419',
+  },
+  statsHeader: {
+    padding: 16,
+    backgroundColor: '#1a2332',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2d3748',
+  },
+  statsTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  statsSubtitle: {
+    color: '#8892a0',
+    fontSize: 14,
+  },
+  locationGrid: {
+    padding: 16,
+  },
+  locationCard: {
+    backgroundColor: '#1a2332',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+  },
+  locationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  locationTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
     flex: 1,
   },
-  customMarker: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    minWidth: 40,
+  priceIndicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  locationSubtitle: {
+    color: '#8892a0',
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  locationPrice: {
+    color: '#4f9eff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  locationCoords: {
+    color: '#6b7280',
+    fontSize: 12,
+  },
+  emptyState: {
+    padding: 32,
     alignItems: 'center',
   },
-  markerPrice: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
+  emptyStateText: {
+    color: '#8892a0',
+    fontSize: 16,
+    textAlign: 'center',
   },
   legend: {
-    position: 'absolute',
-    bottom: 20,
-    left: 16,
-    backgroundColor: 'rgba(26, 35, 50, 0.9)',
+    backgroundColor: '#1a2332',
     padding: 12,
-    borderRadius: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#2d3748',
   },
   legendTitle: {
     color: '#fff',
@@ -518,13 +557,11 @@ const styles = StyleSheet.create({
   },
   legendItems: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    justifyContent: 'space-around',
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 12,
-    marginBottom: 4,
   },
   legendColor: {
     width: 12,
@@ -566,6 +603,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
+    marginTop: 12,
   },
   modalInfoText: {
     color: '#8892a0',

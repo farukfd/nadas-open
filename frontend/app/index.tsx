@@ -8,6 +8,8 @@ import {
   ScrollView,
   Alert,
   Platform,
+  TextInput,
+  FlatList,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,12 +25,25 @@ interface User {
   user_type: 'guest' | 'individual' | 'corporate';
   query_limit: number;
   query_count: number;
+  phone_verified: boolean;
+}
+
+interface SearchResult {
+  id: string;
+  il: string;
+  ilce: string;
+  mahalle: string;
+  full_address: string;
 }
 
 export default function Index() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [guestQueryCount, setGuestQueryCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
 
   useEffect(() => {
     checkAuthStatus();
@@ -67,54 +82,47 @@ export default function Index() {
     }
   };
 
-  const handleGuestQuery = () => {
-    if (guestQueryCount >= 3) {
-      Alert.alert(
-        'Sorgulama Limiti',
-        'Misafir kullanıcılar en fazla 3 sorgulama yapabilir. Lütfen üye olun veya giriş yapın.',
-        [
-          { text: 'Tamam', style: 'default' },
-          { text: 'Üye Ol', onPress: handleRegister },
-        ]
-      );
+  const handleSearch = async (query: string) => {
+    if (query.length < 2) {
+      setSearchResults([]);
+      setShowResults(false);
       return;
     }
-    // Navigate to query screen
-    router.push('/query');
+
+    setIsSearching(true);
+    try {
+      // Bu kısmı gerçek API ile değiştireceğiz
+      const mockResults: SearchResult[] = [
+        { id: '1', il: 'İstanbul', ilce: 'Arnavutköy', mahalle: 'Hadımköy', full_address: 'İstanbul, Arnavutköy, Hadımköy' },
+        { id: '2', il: 'İstanbul', ilce: 'Kadıköy', mahalle: 'Moda', full_address: 'İstanbul, Kadıköy, Moda' },
+        { id: '3', il: 'Ankara', ilce: 'Çankaya', mahalle: 'Kavaklıdere', full_address: 'Ankara, Çankaya, Kavaklıdere' },
+        { id: '4', il: 'İzmir', ilce: 'Konak', mahalle: 'Alsancak', full_address: 'İzmir, Konak, Alsancak' },
+      ].filter(result => 
+        result.full_address.toLowerCase().includes(query.toLowerCase())
+      );
+
+      setSearchResults(mockResults);
+      setShowResults(true);
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleResultSelect = (result: SearchResult) => {
+    setSearchQuery(result.full_address);
+    setShowResults(false);
+    // Navigate to detail page
+    router.push(`/detail/${result.id}`);
   };
 
   const handleLogin = () => {
-    // Navigate to login screen
     router.push('/login');
   };
 
   const handleRegister = () => {
-    // Navigate to register screen
     router.push('/register');
-  };
-
-  const handleQuery = () => {
-    if (!user) return;
-    
-    if (user.query_count >= user.query_limit) {
-      Alert.alert(
-        'Sorgulama Limiti',
-        'Ücretsiz sorgulama hakkınız doldu. Paket satın alarak devam edebilirsiniz.',
-        [
-          { text: 'Tamam', style: 'default' },
-          { text: 'Paket Satın Al', onPress: () => console.log('Navigate to packages') },
-        ]
-      );
-      return;
-    }
-    
-    // Navigate to protected query screen
-    router.push('/query');
-  };
-
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem('auth_token');
-    setUser(null);
   };
 
   if (isLoading) {
@@ -133,125 +141,233 @@ export default function Index() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Emlak Endeksi</Text>
-          <Text style={styles.subtitle}>
-            Türkiye'nin En Kapsamlı Emlak Fiyat Endeksi
-          </Text>
-        </View>
-
-        {/* User Info */}
-        {user ? (
-          <View style={styles.userCard}>
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>
-                {user.first_name} {user.last_name}
-              </Text>
-              <Text style={styles.userType}>
-                {user.user_type === 'individual' ? 'Bireysel Üye' : 
-                 user.user_type === 'corporate' ? 'Kurumsal Üye' : 'Misafir'}
-              </Text>
-              <Text style={styles.queryInfo}>
-                Kalan Sorgulama: {user.query_limit - user.query_count}/{user.query_limit}
-              </Text>
-            </View>
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-              <Text style={styles.logoutButtonText}>Çıkış</Text>
-            </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.logo}>EmlakEkspertizi</Text>
+            <Text style={styles.logoSubtitle}>Profesyonel Emlak Değerleme</Text>
           </View>
-        ) : (
-          <View style={styles.guestCard}>
-            <Text style={styles.guestText}>Misafir Kullanıcı</Text>
-            <Text style={styles.guestQueryInfo}>
-              Kalan Ücretsiz Sorgulama: {3 - guestQueryCount}/3
-            </Text>
-          </View>
-        )}
-
-        {/* Main Features */}
-        <View style={styles.featuresContainer}>
-          <Text style={styles.sectionTitle}>Özellikler</Text>
           
-          <View style={styles.featureGrid}>
-            <View style={styles.featureCard}>
-              <Text style={styles.featureIcon}>🗺️</Text>
-              <Text style={styles.featureTitle}>Akıllı Harita</Text>
-              <Text style={styles.featureDescription}>
-                Türkiye özel harita sistemi ile fiyat görselleştirme
-              </Text>
-              <TouchableOpacity 
-                style={styles.featureButton}
-                onPress={() => router.push('/map')}
-              >
-                <Text style={styles.featureButtonText}>Haritayı Aç</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.featureCard}>
-              <Text style={styles.featureIcon}>📊</Text>
-              <Text style={styles.featureTitle}>Fiyat Endeksi</Text>
-              <Text style={styles.featureDescription}>
-                2005-2025 arası mahalle bazında aylık fiyat trendleri
-              </Text>
-            </View>
-
-            <View style={styles.featureCard}>
-              <Text style={styles.featureIcon}>👥</Text>
-              <Text style={styles.featureTitle}>Demografik Analiz</Text>
-              <Text style={styles.featureDescription}>
-                Mahalle bazında nüfus ve sosyo-ekonomik veriler
-              </Text>
-            </View>
-
-            <View style={styles.featureCard}>
-              <Text style={styles.featureIcon}>🔔</Text>
-              <Text style={styles.featureTitle}>Fiyat Alarmları</Text>
-              <Text style={styles.featureDescription}>
-                İstediğiniz fiyat seviyelerinde bildirim alın
-              </Text>
-              <TouchableOpacity 
-                style={styles.featureButton}
-                onPress={() => router.push('/notifications')}
-              >
-                <Text style={styles.featureButtonText}>Alarm Kur</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionContainer}>
           {user ? (
-            <TouchableOpacity style={styles.primaryButton} onPress={handleQuery}>
-              <Text style={styles.primaryButtonText}>Sorgulama Yap</Text>
+            <TouchableOpacity 
+              style={styles.userMenu}
+              onPress={() => setUser(null)}
+            >
+              <Text style={styles.userMenuText}>{user.first_name}</Text>
+              <Text style={styles.userMenuSubtext}>Çıkış</Text>
             </TouchableOpacity>
           ) : (
-            <>
-              <TouchableOpacity style={styles.primaryButton} onPress={handleGuestQuery}>
-                <Text style={styles.primaryButtonText}>Misafir Sorgulama</Text>
+            <View style={styles.authButtons}>
+              <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+                <Text style={styles.loginButtonText}>Giriş</Text>
               </TouchableOpacity>
-              
-              <View style={styles.authButtons}>
-                <TouchableOpacity style={styles.secondaryButton} onPress={handleLogin}>
-                  <Text style={styles.secondaryButtonText}>Giriş Yap</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity style={styles.secondaryButton} onPress={handleRegister}>
-                  <Text style={styles.secondaryButtonText}>Üye Ol</Text>
-                </TouchableOpacity>
-              </View>
-            </>
+              <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+                <Text style={styles.registerButtonText}>Üye Ol</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
-        {/* Info Section */}
-        <View style={styles.infoSection}>
-          <Text style={styles.infoTitle}>Neden Emlak Endeksi?</Text>
-          <Text style={styles.infoText}>
-            • 20 yıllık kapsamlı veri arşivi{'\n'}
-            • Türkiye'nin tüm il, ilçe ve mahallelerini kapsayan analiz{'\n'}
-            • Gerçek zamanlı piyasa verileri{'\n'}
-            • Profesyonel demografik analiz araçları{'\n'}
-            • Yatırım kararlarınız için güvenilir kaynak
+        {/* Hero Section */}
+        <View style={styles.heroSection}>
+          <Text style={styles.heroTitle}>
+            Türkiye'nin En Kapsamlı{'\n'}Emlak Endeks Sistemi
+          </Text>
+          <Text style={styles.heroSubtitle}>
+            2005-2025 arası 20 yıllık veri ile profesyonel emlak değerleme hizmeti
+          </Text>
+
+          {/* Google-style Search */}
+          <View style={styles.searchContainer}>
+            <View style={styles.searchInputContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="İl, İlçe veya Mahalle arayın... (Örn: İstanbul Arnavutköy)"
+                placeholderTextColor="#8892a0"
+                value={searchQuery}
+                onChangeText={(text) => {
+                  setSearchQuery(text);
+                  handleSearch(text);
+                }}
+                autoCapitalize="words"
+              />
+              <TouchableOpacity style={styles.searchButton}>
+                <Text style={styles.searchIcon}>🔍</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Search Results */}
+            {showResults && searchResults.length > 0 && (
+              <View style={styles.searchResults}>
+                <FlatList
+                  data={searchResults}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.searchResultItem}
+                      onPress={() => handleResultSelect(item)}
+                    >
+                      <Text style={styles.searchResultText}>📍 {item.full_address}</Text>
+                    </TouchableOpacity>
+                  )}
+                  scrollEnabled={false}
+                />
+              </View>
+            )}
+          </View>
+
+          {/* Quick Stats */}
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>17</Text>
+              <Text style={styles.statLabel}>Şehir</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>6,120+</Text>
+              <Text style={styles.statLabel}>Veri Noktası</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>20</Text>
+              <Text style={styles.statLabel}>Yıl Arşiv</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* User Status */}
+        {user ? (
+          <View style={styles.userStatusCard}>
+            <Text style={styles.userStatusTitle}>
+              Hoş geldiniz, {user.first_name} {user.last_name}
+            </Text>
+            <Text style={styles.userStatusType}>
+              {user.user_type === 'individual' ? '👤 Bireysel Üye' : 
+               user.user_type === 'corporate' ? '🏢 Kurumsal Üye' : '👋 Misafir'}
+            </Text>
+            <View style={styles.queryStatus}>
+              <Text style={styles.queryText}>
+                Kalan Sorgulama: {user.query_limit - user.query_count} / {user.query_limit}
+              </Text>
+              {!user.phone_verified && user.query_count >= 5 && (
+                <TouchableOpacity style={styles.verifyButton}>
+                  <Text style={styles.verifyButtonText}>📱 Telefon Doğrula (+5 sorgu)</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        ) : (
+          <View style={styles.guestStatusCard}>
+            <Text style={styles.guestStatusTitle}>Misafir Kullanıcı</Text>
+            <Text style={styles.guestStatusText}>
+              Kalan Ücretsiz Sorgulama: {3 - guestQueryCount} / 3
+            </Text>
+            <TouchableOpacity style={styles.upgradeButton} onPress={handleRegister}>
+              <Text style={styles.upgradeButtonText}>
+                Üye Ol - 5 Ücretsiz Sorgulama Kazanın
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Services Section */}
+        <View style={styles.servicesSection}>
+          <Text style={styles.sectionTitle}>Profesyonel Hizmetlerimiz</Text>
+          
+          <View style={styles.servicesGrid}>
+            <TouchableOpacity 
+              style={styles.serviceCard}
+              onPress={() => router.push('/map')}
+            >
+              <Text style={styles.serviceIcon}>🗺️</Text>
+              <Text style={styles.serviceTitle}>Akıllı Harita</Text>
+              <Text style={styles.serviceDescription}>
+                İnteraktif harita ile mahalle bazında fiyat analizi
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.serviceCard}
+              onPress={() => router.push('/query')}
+            >
+              <Text style={styles.serviceIcon}>📊</Text>
+              <Text style={styles.serviceTitle}>Fiyat Endeksi</Text>
+              <Text style={styles.serviceDescription}>
+                20 yıllık geçmiş veri ile detaylı trend analizi
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.serviceCard}
+              onPress={() => router.push('/notifications')}
+            >
+              <Text style={styles.serviceIcon}>🔔</Text>
+              <Text style={styles.serviceTitle}>Fiyat Alarmları</Text>
+              <Text style={styles.serviceDescription}>
+                Hedef fiyatlarda otomatik bildirim
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.serviceCard}>
+              <Text style={styles.serviceIcon}>📈</Text>
+              <Text style={styles.serviceTitle}>Yatırım Analizi</Text>
+              <Text style={styles.serviceDescription}>
+                ROI hesaplama ve risk değerlendirmesi
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Why Choose Us */}
+        <View style={styles.whySection}>
+          <Text style={styles.sectionTitle}>Neden EmlakEkspertizi?</Text>
+          
+          <View style={styles.featuresContainer}>
+            <View style={styles.featureItem}>
+              <Text style={styles.featureIcon}>✅</Text>
+              <View style={styles.featureContent}>
+                <Text style={styles.featureTitle}>Profesyonel Analiz</Text>
+                <Text style={styles.featureText}>
+                  20 yıllık geçmiş veri ile güvenilir emlak değerleme
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.featureItem}>
+              <Text style={styles.featureIcon}>🎯</Text>
+              <View style={styles.featureContent}>
+                <Text style={styles.featureTitle}>Mahalle Bazında Detay</Text>
+                <Text style={styles.featureText}>
+                  Sokak seviyesinde fiyat analizi ve trend takibi
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.featureItem}>
+              <Text style={styles.featureIcon}>🚀</Text>
+              <View style={styles.featureContent}>
+                <Text style={styles.featureTitle}>Gerçek Zamanlı Veri</Text>
+                <Text style={styles.featureText}>
+                  Güncel piyasa verileri ile anlık fiyat güncellemeleri
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.featureItem}>
+              <Text style={styles.featureIcon}>🔒</Text>
+              <View style={styles.featureContent}>
+                <Text style={styles.featureTitle}>Güvenilir & Yasal</Text>
+                <Text style={styles.featureText}>
+                  Nadas.com.tr tarafından yasal olarak desteklenmektedir
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            © 2025 EmlakEkspertizi.com - Nadas.com.tr Güvencesiyle
+          </Text>
+          <Text style={styles.footerSubtext}>
+            Profesyonel Emlak Değerleme ve Analiz Hizmetleri
           </Text>
         </View>
       </ScrollView>
@@ -262,7 +378,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1419',
+    backgroundColor: '#ffffff',
   },
   loadingContainer: {
     flex: 1,
@@ -270,182 +386,327 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#fff',
+    color: '#2563eb',
     fontSize: 18,
   },
   scrollContent: {
     paddingBottom: 30,
   },
   header: {
-    padding: 24,
-    alignItems: 'center',
-    backgroundColor: '#1a2332',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#8892a0',
-    textAlign: 'center',
-  },
-  userCard: {
-    backgroundColor: '#1a2332',
-    margin: 16,
-    padding: 20,
-    borderRadius: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#2563eb',
+    borderBottomWidth: 3,
+    borderBottomColor: '#1d4ed8',
   },
-  userInfo: {
+  headerContent: {
     flex: 1,
   },
-  userName: {
-    fontSize: 18,
+  logo: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
+    color: '#ffffff',
   },
-  userType: {
-    fontSize: 14,
-    color: '#4f9eff',
-    marginBottom: 4,
-  },
-  queryInfo: {
+  logoSubtitle: {
     fontSize: 12,
-    color: '#8892a0',
+    color: '#bfdbfe',
+    marginTop: 2,
   },
-  logoutButton: {
-    backgroundColor: '#dc3545',
+  userMenu: {
+    alignItems: 'flex-end',
+  },
+  userMenuText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  userMenuSubtext: {
+    color: '#bfdbfe',
+    fontSize: 12,
+  },
+  authButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  loginButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#ffffff',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,
   },
-  logoutButtonText: {
-    color: '#fff',
+  loginButtonText: {
+    color: '#ffffff',
     fontSize: 14,
     fontWeight: '600',
   },
-  guestCard: {
-    backgroundColor: '#1a2332',
+  registerButton: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  registerButtonText: {
+    color: '#2563eb',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  heroSection: {
+    padding: 24,
+    backgroundColor: '#f8fafc',
+    alignItems: 'center',
+  },
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  heroSubtitle: {
+    fontSize: 16,
+    color: '#64748b',
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 24,
+  },
+  searchContainer: {
+    width: '100%',
+    position: 'relative',
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    borderRadius: 25,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    marginBottom: 24,
+  },
+  searchInput: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: '#1e293b',
+  },
+  searchButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    justifyContent: 'center',
+  },
+  searchIcon: {
+    fontSize: 20,
+  },
+  searchResults: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    maxHeight: 200,
+    zIndex: 1000,
+  },
+  searchResultItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  searchResultText: {
+    fontSize: 14,
+    color: '#475569',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginTop: 16,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2563eb',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 4,
+  },
+  userStatusCard: {
+    backgroundColor: '#dbeafe',
     margin: 16,
     padding: 20,
     borderRadius: 12,
-    alignItems: 'center',
+    borderLeftWidth: 4,
+    borderLeftColor: '#2563eb',
   },
-  guestText: {
+  userStatusTitle: {
     fontSize: 18,
-    color: '#fff',
+    fontWeight: 'bold',
+    color: '#1e40af',
     marginBottom: 8,
   },
-  guestQueryInfo: {
+  userStatusType: {
     fontSize: 14,
-    color: '#8892a0',
-  },
-  featuresContainer: {
-    padding: 16,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 16,
-  },
-  featureGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  featureCard: {
-    backgroundColor: '#1a2332',
-    width: '48%',
-    padding: 16,
-    borderRadius: 12,
+    color: '#3730a3',
     marginBottom: 12,
+  },
+  queryStatus: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  featureIcon: {
-    fontSize: 32,
-    marginBottom: 8,
+  queryText: {
+    fontSize: 14,
+    color: '#1e40af',
+    flex: 1,
   },
-  featureTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  featureDescription: {
-    fontSize: 12,
-    color: '#8892a0',
-    textAlign: 'center',
-    lineHeight: 16,
-    marginBottom: 8,
-  },
-  featureButton: {
-    backgroundColor: '#4f9eff',
+  verifyButton: {
+    backgroundColor: '#10b981',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
   },
-  featureButtonText: {
-    color: '#fff',
-    fontSize: 11,
+  verifyButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
     fontWeight: '600',
   },
-  actionContainer: {
-    padding: 16,
-  },
-  primaryButton: {
-    backgroundColor: '#4f9eff',
-    paddingVertical: 16,
+  guestStatusCard: {
+    backgroundColor: '#fef3c7',
+    margin: 16,
+    padding: 20,
     borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#f59e0b',
     alignItems: 'center',
-    marginBottom: 12,
   },
-  primaryButtonText: {
-    color: '#fff',
+  guestStatusTitle: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#92400e',
+    marginBottom: 8,
   },
-  authButtons: {
+  guestStatusText: {
+    fontSize: 14,
+    color: '#a16207',
+    marginBottom: 16,
+  },
+  upgradeButton: {
+    backgroundColor: '#2563eb',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  upgradeButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  servicesSection: {
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  servicesGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  secondaryButton: {
-    backgroundColor: '#2d3748',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+  serviceCard: {
+    width: '48%',
+    backgroundColor: '#ffffff',
+    padding: 16,
     borderRadius: 12,
-    flex: 1,
-    marginHorizontal: 4,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
     alignItems: 'center',
   },
-  secondaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  infoSection: {
-    padding: 16,
-    backgroundColor: '#1a2332',
-    margin: 16,
-    borderRadius: 12,
-  },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
+  serviceIcon: {
+    fontSize: 32,
     marginBottom: 12,
   },
-  infoText: {
+  serviceTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  serviceDescription: {
+    fontSize: 12,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  whySection: {
+    padding: 20,
+    backgroundColor: '#f8fafc',
+  },
+  featuresContainer: {
+    gap: 16,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  featureIcon: {
+    fontSize: 20,
+    marginRight: 12,
+    marginTop: 2,
+  },
+  featureContent: {
+    flex: 1,
+  },
+  featureTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 4,
+  },
+  featureText: {
     fontSize: 14,
-    color: '#8892a0',
+    color: '#64748b',
     lineHeight: 20,
+  },
+  footer: {
+    padding: 20,
+    backgroundColor: '#1e293b',
+    alignItems: 'center',
+  },
+  footerText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  footerSubtext: {
+    color: '#94a3b8',
+    fontSize: 12,
+    textAlign: 'center',
   },
 });

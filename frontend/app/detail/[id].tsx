@@ -7,10 +7,12 @@ import {
   SafeAreaView,
   ScrollView,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { LineChart } from 'react-native-chart-kit';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -28,6 +30,7 @@ interface LocationDetail {
     population: number;
     avgIncome: number;
     educationLevel: { [key: string]: number };
+    ageDistribution: { [key: string]: number };
   };
   priceHistory: Array<{
     year: number;
@@ -36,13 +39,26 @@ interface LocationDetail {
   }>;
 }
 
+type PropertyType = 'residential_sale' | 'residential_rent' | 'commercial_sale' | 'commercial_rent' | 'land_sale';
+
+const PROPERTY_TYPES = [
+  { key: 'residential_sale', label: '🏠 Satılık Konut', color: '#2563eb' },
+  { key: 'residential_rent', label: '🏠 Kiralık Konut', color: '#059669' },
+  { key: 'commercial_sale', label: '🏢 Satılık İşyeri', color: '#dc2626' },
+  { key: 'commercial_rent', label: '🏢 Kiralık İşyeri', color: '#ea580c' },
+  { key: 'land_sale', label: '🏗️ Satılık Arsa', color: '#7c3aed' },
+];
+
 export default function LocationDetail() {
   const { id } = useLocalSearchParams();
   const [locationData, setLocationData] = useState<LocationDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPropertyType, setSelectedPropertyType] = useState<PropertyType>('residential_sale');
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     loadLocationDetail();
+    checkFavoriteStatus();
   }, [id]);
 
   const loadLocationDetail = async () => {
@@ -67,6 +83,12 @@ export default function LocationDetail() {
             'Ortaokul': 28.3,
             'Lise': 32.1,
             'Üniversite': 14.1
+          },
+          ageDistribution: {
+            '0-18': 22.5,
+            '18-35': 35.2,
+            '35-55': 28.8,
+            '55+': 13.5
           }
         },
         priceHistory: [
@@ -91,6 +113,39 @@ export default function LocationDetail() {
     }
   };
 
+  const checkFavoriteStatus = async () => {
+    try {
+      const favorites = await AsyncStorage.getItem('favorite_locations');
+      if (favorites) {
+        const favoriteList = JSON.parse(favorites);
+        setIsFavorite(favoriteList.includes(id));
+      }
+    } catch (error) {
+      console.error('Error checking favorite status:', error);
+    }
+  };
+
+  const toggleFavorite = async () => {
+    try {
+      const favorites = await AsyncStorage.getItem('favorite_locations');
+      let favoriteList = favorites ? JSON.parse(favorites) : [];
+      
+      if (isFavorite) {
+        favoriteList = favoriteList.filter((fav: string) => fav !== id);
+        setIsFavorite(false);
+        Alert.alert('✅', 'Favorilerden çıkarıldı');
+      } else {
+        favoriteList.push(id);
+        setIsFavorite(true);
+        Alert.alert('⭐', 'Favorilere eklendi');
+      }
+      
+      await AsyncStorage.setItem('favorite_locations', JSON.stringify(favoriteList));
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  };
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
@@ -107,6 +162,7 @@ export default function LocationDetail() {
     );
     
     const prices = locationData.priceHistory.map(item => item.price);
+    const selectedColor = PROPERTY_TYPES.find(p => p.key === selectedPropertyType)?.color || '#2563eb';
 
     return {
       labels: labels.filter((_, index) => index % 2 === 0), // Show every 2nd label
@@ -147,15 +203,19 @@ export default function LocationDetail() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       
-      {/* Header */}
+      {/* Header - EmlakEkspertizi Style */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backButton}>← Geri</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Emlak Endeksi Detayı</Text>
-        <View style={styles.headerRight} />
+        <TouchableOpacity onPress={toggleFavorite}>
+          <Text style={[styles.favoriteButton, { color: isFavorite ? '#fbbf24' : '#ffffff' }]}>
+            {isFavorite ? '⭐' : '☆'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
@@ -184,6 +244,31 @@ export default function LocationDetail() {
           </View>
         </View>
 
+        {/* Property Type Selection */}
+        <View style={styles.propertyTypeSection}>
+          <Text style={styles.sectionTitle}>Emlak Türü</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {PROPERTY_TYPES.map((type) => (
+              <TouchableOpacity
+                key={type.key}
+                style={[
+                  styles.propertyTypeButton,
+                  selectedPropertyType === type.key && styles.activePropertyType,
+                  { borderColor: type.color }
+                ]}
+                onPress={() => setSelectedPropertyType(type.key as PropertyType)}
+              >
+                <Text style={[
+                  styles.propertyTypeText,
+                  selectedPropertyType === type.key && { color: type.color }
+                ]}>
+                  {type.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
         {/* Key Metrics */}
         <View style={styles.metricsContainer}>
           <View style={styles.metricItem}>
@@ -206,12 +291,19 @@ export default function LocationDetail() {
             </Text>
             <Text style={styles.metricLabel}>Ort. Gelir</Text>
           </View>
+
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>A+</Text>
+            <Text style={styles.metricLabel}>Yatırım Notu</Text>
+          </View>
         </View>
 
         {/* Price Chart */}
         {chartData && (
           <View style={styles.chartContainer}>
-            <Text style={styles.sectionTitle}>Fiyat Trendi (2020-2024)</Text>
+            <Text style={styles.sectionTitle}>
+              Fiyat Trendi - {PROPERTY_TYPES.find(p => p.key === selectedPropertyType)?.label}
+            </Text>
             <LineChart
               data={chartData}
               width={width - 32}
@@ -242,14 +334,31 @@ export default function LocationDetail() {
         <View style={styles.demographicsContainer}>
           <Text style={styles.sectionTitle}>Demografik Veriler</Text>
           
-          <View style={styles.educationContainer}>
-            <Text style={styles.subsectionTitle}>Eğitim Düzeyi Dağılımı</Text>
+          {/* Education Level */}
+          <View style={styles.demographicCard}>
+            <Text style={styles.subsectionTitle}>📚 Eğitim Düzeyi Dağılımı</Text>
             {Object.entries(locationData.demographics.educationLevel).map(([level, percentage]) => (
               <View key={level} style={styles.educationItem}>
                 <Text style={styles.educationLevel}>{level}</Text>
                 <View style={styles.progressBar}>
                   <View 
                     style={[styles.progressFill, { width: `${percentage}%` }]} 
+                  />
+                </View>
+                <Text style={styles.educationPercentage}>%{percentage}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Age Distribution */}
+          <View style={styles.demographicCard}>
+            <Text style={styles.subsectionTitle}>👥 Yaş Dağılımı</Text>
+            {Object.entries(locationData.demographics.ageDistribution).map(([age, percentage]) => (
+              <View key={age} style={styles.educationItem}>
+                <Text style={styles.educationLevel}>{age} yaş</Text>
+                <View style={styles.progressBar}>
+                  <View 
+                    style={[styles.progressFill, { width: `${percentage}%`, backgroundColor: '#10b981' }]} 
                   />
                 </View>
                 <Text style={styles.educationPercentage}>%{percentage}</Text>
@@ -277,7 +386,7 @@ export default function LocationDetail() {
 
         {/* Professional Analysis */}
         <View style={styles.analysisContainer}>
-          <Text style={styles.sectionTitle}>Profesyonel Analiz</Text>
+          <Text style={styles.sectionTitle}>🎯 Profesyonel Analiz</Text>
           
           <View style={styles.analysisCard}>
             <Text style={styles.analysisTitle}>📈 Yatırım Değerlendirmesi</Text>
@@ -294,6 +403,16 @@ export default function LocationDetail() {
               Gelişmekte olan bir yerleşim alanı olan {locationData.mahalle}, 
               İstanbul'un kuzey koridorunda yer almaktadır. Ulaşım imkanları 
               ve altyapı yatırımları ile değer artış potansiyeli yüksektir.
+            </Text>
+          </View>
+
+          <View style={styles.analysisCard}>
+            <Text style={styles.analysisTitle}>💰 Fiyat Analizi</Text>
+            <Text style={styles.analysisText}>
+              Mevcut m² fiyatı {formatPrice(locationData.currentPrice)} olan bölge, 
+              benzer karakteristiklere sahip diğer İstanbul ilçeleri ile karşılaştırıldığında 
+              rekabetçi konumdadır. Yıllık %{locationData.yearlyGrowth} büyüme oranı ile 
+              istikrarlı bir değer artışı göstermektedir.
             </Text>
           </View>
         </View>

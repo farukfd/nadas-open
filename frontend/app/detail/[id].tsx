@@ -473,8 +473,59 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  headerRight: {
-    width: 50,
+  favoriteButton: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  propertyTypeSection: {
+    padding: 16,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  propertyTypeButton: {
+    backgroundColor: '#f8fafc',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  activePropertyType: {
+    backgroundColor: '#dbeafe',
+  },
+  propertyTypeText: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '600',
+  },
+  metricsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 20,
+    backgroundColor: '#ffffff',
+  },
+  metricItem: {
+    alignItems: 'center',
+  },
+  metricValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2563eb',
+    marginBottom: 4,
+  },
+  metricLabel: {
+    fontSize: 11,
+    color: '#64748b',
+  },
+  demographicCard: {
+    backgroundColor: '#ffffff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#2563eb',
   },
   content: {
     flex: 1,

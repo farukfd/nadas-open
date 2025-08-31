@@ -467,23 +467,88 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   heroSection: {
-    padding: 24,
-    backgroundColor: '#f8fafc',
+    height: 600,
+    position: 'relative',
+  },
+  heroBackgroundImage: {
+    flex: 1,
+    backgroundColor: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%)',
+    // Simulating the ocean/earth background with gradient
+    background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 30%, #0369a1 70%, #0891b2 100%)',
+  },
+  heroOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(30, 64, 175, 0.8)', // Blue overlay to match the original
+    justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  heroContent: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  heroStats: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#fbbf24', // Orange color like in the original
+    marginBottom: 8,
+  },
+  heroStatsText: {
+    fontSize: 24,
+    fontWeight: 'normal',
+    color: '#ffffff',
   },
   heroTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1e293b',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  heroSubtitle: {
-    fontSize: 16,
-    color: '#64748b',
+    color: '#ffffff',
     textAlign: 'center',
     marginBottom: 32,
-    lineHeight: 24,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  propertyTypeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    marginBottom: 32,
+  },
+  propertyTypeButton: {
+    backgroundColor: '#f59e0b', // Orange buttons like in original
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    minWidth: 80,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  propertyTypeIcon: {
+    fontSize: 18,
+    marginBottom: 4,
+  },
+  propertyTypeText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  contactButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+    marginTop: 24,
+  },
+  contactButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   searchContainer: {
     width: '100%',

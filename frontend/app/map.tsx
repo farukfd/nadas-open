@@ -873,11 +873,23 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   modalTitle: {
     color: '#fff',
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 4,
+    flex: 1,
+  },
+  modalFavoriteButton: {
+    padding: 8,
+  },
+  modalFavoriteIcon: {
+    fontSize: 24,
   },
   modalSubtitle: {
     color: '#8892a0',

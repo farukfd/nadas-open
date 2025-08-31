@@ -240,8 +240,8 @@ class BackendTester:
         headers = {"Authorization": f"Bearer {self.auth_token}"}
         query_data = {
             "il": "İstanbul",
-            "ilce": "Kadıköy",
-            "mahalle": "Merkez",
+            "ilce": "Beyoğlu",
+            "mahalle": "Galata",  # Using actual seeded location
             "property_type": "residential_sale"
         }
         

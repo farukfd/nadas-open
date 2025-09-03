@@ -1139,4 +1139,213 @@ const styles = StyleSheet.create({
     color: '#64748b',
     fontSize: 12,
   },
+  
+  // ML Pipeline Styles
+  dataSection: {
+    backgroundColor: '#1e293b',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 24,
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  dataPreview: {
+    marginTop: 16,
+    backgroundColor: '#334155',
+    padding: 16,
+    borderRadius: 8,
+  },
+  dataPreviewTitle: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  dataTable: {
+    minWidth: width * 1.2,
+  },
+  dataRow: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#475569',
+  },
+  dataHeader: {
+    color: '#fbbf24',
+    fontSize: 12,
+    fontWeight: 'bold',
+    width: 120,
+    paddingHorizontal: 8,
+  },
+  dataCell: {
+    color: '#e2e8f0',
+    fontSize: 11,
+    width: 120,
+    paddingHorizontal: 8,
+  },
+  dataCellMore: {
+    color: '#94a3b8',
+    fontSize: 11,
+    fontStyle: 'italic',
+    paddingHorizontal: 8,
+  },
+  optionsContainer: {
+    gap: 12,
+  },
+  optionItem: {
+    backgroundColor: '#334155',
+    padding: 12,
+    borderRadius: 8,
+  },
+  optionLabel: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  optionDescription: {
+    color: '#94a3b8',
+    fontSize: 12,
+  },
+  modelSection: {
+    backgroundColor: '#1e293b',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 24,
+  },
+  modelGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  modelCard: {
+    backgroundColor: '#334155',
+    padding: 16,
+    borderRadius: 8,
+    width: (width - 80) / 2,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  selectedModelCard: {
+    borderColor: '#2563eb',
+    backgroundColor: '#1e3a8a',
+  },
+  modelName: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  selectedModelName: {
+    color: '#60a5fa',
+  },
+  modelDesc: {
+    color: '#94a3b8',
+    fontSize: 12,
+  },
+  trainingSection: {
+    backgroundColor: '#1e293b',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 24,
+  },
+  trainButton: {
+    backgroundColor: '#059669',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  trainButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  trainingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  warningText: {
+    color: '#fbbf24',
+    fontSize: 14,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  resultSection: {
+    backgroundColor: '#1e293b',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 24,
+  },
+  metricsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  metricCard: {
+    backgroundColor: '#334155',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    width: (width - 80) / 3,
+  },
+  metricLabel: {
+    color: '#94a3b8',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  metricValue: {
+    color: '#10b981',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  errorContainer: {
+    backgroundColor: '#7f1d1d',
+    padding: 16,
+    borderRadius: 8,
+  },
+  errorText: {
+    color: '#fca5a5',
+    fontSize: 14,
+  },
+  modelsListSection: {
+    backgroundColor: '#1e293b',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 24,
+  },
+  noModelsText: {
+    color: '#94a3b8',
+    fontSize: 14,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    paddingVertical: 20,
+  },
+  modelListCard: {
+    backgroundColor: '#334155',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  modelListInfo: {
+    flex: 1,
+  },
+  modelListName: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  modelListDate: {
+    color: '#94a3b8',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  modelListMetrics: {
+    color: '#10b981',
+    fontSize: 12,
+  },
 });

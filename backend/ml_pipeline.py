@@ -277,13 +277,19 @@ class ModelTrainer:
     
     def _calculate_metrics(self, y_train, y_pred_train, y_test, y_pred_test) -> Dict[str, float]:
         """Calculate model performance metrics"""
+        def safe_metric(value):
+            """Ensure metric values are JSON serializable"""
+            if np.isnan(value) or np.isinf(value):
+                return 0.0
+            return float(value)
+        
         return {
-            'train_rmse': np.sqrt(mean_squared_error(y_train, y_pred_train)),
-            'train_mae': mean_absolute_error(y_train, y_pred_train),
-            'train_r2': r2_score(y_train, y_pred_train),
-            'test_rmse': np.sqrt(mean_squared_error(y_test, y_pred_test)),
-            'test_mae': mean_absolute_error(y_test, y_pred_test),
-            'test_r2': r2_score(y_test, y_pred_test)
+            'train_rmse': safe_metric(np.sqrt(mean_squared_error(y_train, y_pred_train))),
+            'train_mae': safe_metric(mean_absolute_error(y_train, y_pred_train)),
+            'train_r2': safe_metric(r2_score(y_train, y_pred_train)),
+            'test_rmse': safe_metric(np.sqrt(mean_squared_error(y_test, y_pred_test))),
+            'test_mae': safe_metric(mean_absolute_error(y_test, y_pred_test)),
+            'test_r2': safe_metric(r2_score(y_test, y_pred_test))
         }
     
     def _save_model(self, model, model_type: str) -> str:

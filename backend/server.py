@@ -1120,7 +1120,7 @@ async def upload_csv_data(
                 except Exception as e:
                     errors.append(f"Satır {index + 1}: {str(e)}")
         
-        elif data_type == "prices":
+        elif request.data_type == "prices":
             # Process price data
             required_columns = ['location_id', 'date', 'price', 'property_type']
             missing_columns = [col for col in required_columns if col not in df.columns]

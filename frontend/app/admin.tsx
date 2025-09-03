@@ -105,6 +105,11 @@ export default function AdminPanel() {
   const [backfillResult, setBackfillResult] = useState<BackfillResult | null>(null);
   const [isRunningBackfill, setIsRunningBackfill] = useState(false);
   const [backfillVisualization, setBackfillVisualization] = useState<any>(null);
+  
+  // CSV Upload States
+  const [csvFile, setCsvFile] = useState<any>(null);
+  const [isUploadingCSV, setIsUploadingCSV] = useState(false);
+  const [csvResult, setCsvResult] = useState<any>(null);
 
   useEffect(() => {
     checkAdminAuth();

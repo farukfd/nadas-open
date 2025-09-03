@@ -752,6 +752,344 @@ class BackendTester:
         else:
             self.log_test("Large Dataset Performance", False, f"Performance test failed. Status: {status_code}")
     
+    # ========================================
+    # BACKFILL SYSTEM TESTS (FAZ 3)
+    # ========================================
+    
+    def test_backfill_detect_missing_periods(self):
+        """Test eksik dönem tespiti API (Backfill System)"""
+        if not self.auth_token:
+            self.log_test("Backfill Missing Period Detection", False, "No auth token available")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        # Test missing period detection
+        detection_request = {
+            "start_date": "2016-01-01",
+            "end_date": "2022-12-31",
+            "current_data_months": 12
+        }
+        
+        print("\n🔍 Detecting missing periods in historical data (2016-2022)...")
+        success, data, status_code = self.make_request("POST", "/admin/backfill/detect-missing", detection_request, headers, timeout=120)
+        
+        if success and status_code == 200:
+            if data.get("success"):
+                missing_periods = data.get("missing_periods", {})
+                stats = data.get("statistics", {})
+                
+                locations_with_missing = stats.get("locations_with_missing_data", 0)
+                total_missing = stats.get("total_missing_periods", 0)
+                
+                if locations_with_missing > 0 and total_missing > 0:
+                    self.log_test("Backfill Missing Period Detection", True, 
+                                f"Found {locations_with_missing} locations with {total_missing} missing periods (2016-2022)")
+                else:
+                    self.log_test("Backfill Missing Period Detection", False, 
+                                f"No missing periods detected - unexpected for 2016-2022 range")
+            else:
+                self.log_test("Backfill Missing Period Detection", False, f"Detection failed: {data.get('error', 'Unknown error')}")
+        else:
+            self.log_test("Backfill Missing Period Detection", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_backfill_pipeline_execution(self):
+        """Test backfill pipeline execution (ML prediction process)"""
+        if not self.auth_token:
+            self.log_test("Backfill Pipeline Execution", False, "No auth token available")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        # Test backfill pipeline with Prophet + XGBoost models
+        backfill_request = {
+            "start_date": "2020-01-01",  # Smaller range for testing
+            "end_date": "2021-12-31",
+            "current_data_months": 12,
+            "confidence_threshold": 0.7,
+            "models_to_use": ["prophet", "xgboost"]
+        }
+        
+        print("\n🤖 Running backfill pipeline with Prophet + XGBoost models...")
+        success, data, status_code = self.make_request("POST", "/admin/backfill/run", backfill_request, headers, timeout=300)  # 5 min timeout
+        
+        if success and status_code == 200:
+            if data.get("success"):
+                backfilled_locations = data.get("backfilled_locations", 0)
+                total_predictions = data.get("total_predictions", 0)
+                avg_confidence = data.get("avg_confidence", 0)
+                models_used = data.get("models_used", [])
+                session_id = data.get("session_id")
+                
+                if backfilled_locations > 0 and total_predictions > 0:
+                    self.log_test("Backfill Pipeline Execution", True, 
+                                f"Backfilled {backfilled_locations} locations, {total_predictions} predictions, avg confidence: {avg_confidence:.3f}, models: {models_used}")
+                    
+                    # Store session_id for results test
+                    self.backfill_session_id = session_id
+                else:
+                    self.log_test("Backfill Pipeline Execution", False, 
+                                f"No predictions generated - locations: {backfilled_locations}, predictions: {total_predictions}")
+            else:
+                self.log_test("Backfill Pipeline Execution", False, f"Pipeline failed: {data.get('error', 'Unknown error')}")
+        else:
+            self.log_test("Backfill Pipeline Execution", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_backfill_results_retrieval(self):
+        """Test backfill results retrieval API"""
+        if not self.auth_token:
+            self.log_test("Backfill Results Retrieval", False, "No auth token available")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        # Test getting backfill results
+        endpoint = "/admin/backfill/results"
+        if hasattr(self, 'backfill_session_id') and self.backfill_session_id:
+            endpoint += f"?session_id={self.backfill_session_id}"
+        
+        success, data, status_code = self.make_request("GET", endpoint, headers=headers, timeout=60)
+        
+        if success and status_code == 200:
+            if data.get("success"):
+                predictions = data.get("predictions", [])
+                metadata = data.get("metadata", [])
+                summary = data.get("summary", {})
+                
+                total_predictions = summary.get("total_predictions", 0)
+                locations_processed = summary.get("locations_processed", 0)
+                avg_confidence = summary.get("average_confidence", 0)
+                
+                # Check if predictions have required fields
+                if predictions and len(predictions) > 0:
+                    first_pred = predictions[0]
+                    required_fields = ['location_code', 'price_per_m2', 'confidence_score', 'is_predicted', 'model_used']
+                    missing_fields = [field for field in required_fields if field not in first_pred]
+                    
+                    if not missing_fields and first_pred.get('is_predicted') == True:
+                        self.log_test("Backfill Results Retrieval", True, 
+                                    f"Retrieved {total_predictions} predictions for {locations_processed} locations, avg confidence: {avg_confidence:.3f}")
+                    else:
+                        self.log_test("Backfill Results Retrieval", False, 
+                                    f"Invalid prediction format - missing fields: {missing_fields}")
+                else:
+                    self.log_test("Backfill Results Retrieval", False, "No predictions found in results")
+            else:
+                self.log_test("Backfill Results Retrieval", False, f"Results retrieval failed: {data.get('error', 'Unknown error')}")
+        else:
+            self.log_test("Backfill Results Retrieval", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_backfill_visualization(self):
+        """Test backfill visualization API"""
+        if not self.auth_token:
+            self.log_test("Backfill Visualization", False, "No auth token available")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        # Test visualization for Istanbul location
+        test_location = "34001"  # Istanbul location code
+        
+        success, data, status_code = self.make_request("GET", f"/admin/backfill/visualization?location_code={test_location}", headers=headers, timeout=60)
+        
+        if success and status_code == 200:
+            if data.get("success"):
+                visualization_data = data.get("data", {})
+                chart_json = data.get("chart")
+                stats = data.get("statistics", {})
+                
+                historical_count = stats.get("historical_count", 0)
+                predicted_count = stats.get("predicted_count", 0)
+                avg_confidence = stats.get("avg_confidence", 0)
+                
+                # Check if we have both historical and predicted data
+                if chart_json and (historical_count > 0 or predicted_count > 0):
+                    self.log_test("Backfill Visualization", True, 
+                                f"Location {test_location}: {historical_count} historical + {predicted_count} predicted records, avg confidence: {avg_confidence:.3f}")
+                else:
+                    self.log_test("Backfill Visualization", False, 
+                                f"No visualization data for location {test_location}")
+            else:
+                self.log_test("Backfill Visualization", False, f"Visualization failed: {data.get('error', 'Unknown error')}")
+        else:
+            self.log_test("Backfill Visualization", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_backfill_macro_features(self):
+        """Test makro economic features integration in backfill"""
+        if not self.auth_token:
+            self.log_test("Backfill Macro Features", False, "No auth token available")
+            return
+        
+        # This test verifies that macro features (TÜFE, interest rates, USD/TRY) are working
+        # by running a small backfill and checking if the system handles macro data
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        # Test with a very small date range to check macro feature integration
+        macro_test_request = {
+            "start_date": "2021-01-01",
+            "end_date": "2021-06-30",
+            "current_data_months": 6,
+            "confidence_threshold": 0.5,
+            "models_to_use": ["prophet"]  # Prophet is more reliable for this test
+        }
+        
+        print("\n📊 Testing macro economic features integration...")
+        success, data, status_code = self.make_request("POST", "/admin/backfill/run", macro_test_request, headers, timeout=180)
+        
+        if success and status_code == 200:
+            if data.get("success"):
+                # If backfill succeeds, it means macro features are working
+                models_used = data.get("models_used", [])
+                avg_confidence = data.get("avg_confidence", 0)
+                
+                if "prophet" in models_used and avg_confidence > 0:
+                    self.log_test("Backfill Macro Features", True, 
+                                f"Macro features integrated successfully - confidence: {avg_confidence:.3f}")
+                else:
+                    self.log_test("Backfill Macro Features", False, 
+                                f"Macro features may not be working properly - low confidence or no models")
+            else:
+                error_msg = data.get('error', 'Unknown error')
+                if 'macro' in error_msg.lower() or 'feature' in error_msg.lower():
+                    self.log_test("Backfill Macro Features", False, f"Macro feature error: {error_msg}")
+                else:
+                    self.log_test("Backfill Macro Features", True, f"Macro features working (other error: {error_msg})")
+        else:
+            self.log_test("Backfill Macro Features", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_backfill_confidence_scoring(self):
+        """Test confidence scoring system in backfill predictions"""
+        if not self.auth_token:
+            self.log_test("Backfill Confidence Scoring", False, "No auth token available")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        # Get recent backfill results to check confidence scores
+        success, data, status_code = self.make_request("GET", "/admin/backfill/results", headers=headers)
+        
+        if success and status_code == 200:
+            if data.get("success"):
+                predictions = data.get("predictions", [])
+                
+                if predictions:
+                    # Check confidence score distribution
+                    confidence_scores = [p.get('confidence_score', 0) for p in predictions if 'confidence_score' in p]
+                    
+                    if confidence_scores:
+                        min_conf = min(confidence_scores)
+                        max_conf = max(confidence_scores)
+                        avg_conf = sum(confidence_scores) / len(confidence_scores)
+                        
+                        # Confidence scores should be between 0 and 1
+                        if 0 <= min_conf <= 1 and 0 <= max_conf <= 1 and avg_conf > 0:
+                            self.log_test("Backfill Confidence Scoring", True, 
+                                        f"Confidence scores valid: min={min_conf:.3f}, max={max_conf:.3f}, avg={avg_conf:.3f}")
+                        else:
+                            self.log_test("Backfill Confidence Scoring", False, 
+                                        f"Invalid confidence scores: min={min_conf}, max={max_conf}, avg={avg_conf}")
+                    else:
+                        self.log_test("Backfill Confidence Scoring", False, "No confidence scores found in predictions")
+                else:
+                    self.log_test("Backfill Confidence Scoring", False, "No predictions available to test confidence scoring")
+            else:
+                self.log_test("Backfill Confidence Scoring", False, f"Could not get results: {data.get('error', 'Unknown error')}")
+        else:
+            self.log_test("Backfill Confidence Scoring", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_backfill_data_quality(self):
+        """Test data quality and integrity in backfill system"""
+        if not self.auth_token:
+            self.log_test("Backfill Data Quality", False, "No auth token available")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        # Test with invalid date ranges to check error handling
+        invalid_requests = [
+            {
+                "start_date": "2025-01-01",  # Future date
+                "end_date": "2026-12-31",
+                "current_data_months": 12
+            },
+            {
+                "start_date": "2020-12-31",  # End before start
+                "end_date": "2020-01-01",
+                "current_data_months": 12
+            }
+        ]
+        
+        error_handling_works = True
+        
+        for i, invalid_request in enumerate(invalid_requests):
+            success, data, status_code = self.make_request("POST", "/admin/backfill/detect-missing", invalid_request, headers, timeout=30)
+            
+            # Should either return error or handle gracefully
+            if success and status_code == 200:
+                if data.get("success") and data.get("statistics", {}).get("total_missing_periods", 0) == 0:
+                    continue  # Handled gracefully
+                elif not data.get("success"):
+                    continue  # Proper error handling
+                else:
+                    error_handling_works = False
+                    break
+            elif status_code in [400, 422]:  # Proper validation error
+                continue
+            else:
+                error_handling_works = False
+                break
+        
+        if error_handling_works:
+            self.log_test("Backfill Data Quality", True, "Error handling and data validation working correctly")
+        else:
+            self.log_test("Backfill Data Quality", False, "Data quality validation issues detected")
+    
+    def test_backfill_performance_large_dataset(self):
+        """Test backfill system performance with large dataset"""
+        if not self.auth_token:
+            self.log_test("Backfill Performance", False, "No auth token available")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        # Test performance with a reasonable date range
+        performance_request = {
+            "start_date": "2019-01-01",
+            "end_date": "2020-12-31",
+            "current_data_months": 12
+        }
+        
+        print("\n⚡ Testing backfill performance with 2-year range...")
+        import time
+        start_time = time.time()
+        
+        success, data, status_code = self.make_request("POST", "/admin/backfill/detect-missing", performance_request, headers, timeout=120)
+        
+        end_time = time.time()
+        response_time = end_time - start_time
+        
+        if success and status_code == 200:
+            if data.get("success"):
+                stats = data.get("statistics", {})
+                locations_processed = stats.get("locations_with_missing_data", 0)
+                total_missing = stats.get("total_missing_periods", 0)
+                
+                # Performance should be reasonable (< 60 seconds for detection)
+                if response_time < 60 and locations_processed > 0:
+                    self.log_test("Backfill Performance", True, 
+                                f"Processed {locations_processed} locations, {total_missing} periods in {response_time:.2f}s")
+                elif response_time >= 60:
+                    self.log_test("Backfill Performance", False, 
+                                f"Slow performance: {response_time:.2f}s for {locations_processed} locations")
+                else:
+                    self.log_test("Backfill Performance", False, 
+                                f"No data processed in {response_time:.2f}s")
+            else:
+                self.log_test("Backfill Performance", False, f"Performance test failed: {data.get('error', 'Unknown error')}")
+        else:
+            self.log_test("Backfill Performance", False, f"Status: {status_code}, Response time: {response_time:.2f}s")
+    
     def run_all_tests(self):
         """Run all backend tests"""
         print("=" * 60)

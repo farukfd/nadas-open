@@ -366,15 +366,18 @@ frontend:
 
   - task: "Main Dashboard Screen"
     implemented: true
-    working: "unknown"
+    working: false
     file: "/app/frontend/app/index.tsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "Created responsive main screen with user authentication status, guest query counter, feature highlights, and proper navigation"
+      - working: false
+        agent: "user"
+        comment: "USER REPORT: Üye girişi yapılıyor evet ama yukarıda test kullanıcı bölümüne tıklayınca üyelik bölümü gelmiyor kullanıcının detaylı sayfası yok - navigation issue"
 
   - task: "User Authentication Screens"
     implemented: true

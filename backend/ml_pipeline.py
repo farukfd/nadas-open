@@ -421,13 +421,31 @@ class MLPipeline:
             # Clean and prepare data
             cleaned_df = self.data_processor.clean_data(df, options)
             
-            # Generate visualization (simplified to avoid plotly issues)
+            # Ensure all numeric values are JSON serializable
+            def make_json_safe(obj):
+                if isinstance(obj, (np.integer, np.floating)):
+                    if np.isnan(obj) or np.isinf(obj):
+                        return 0.0
+                    return float(obj)
+                elif isinstance(obj, np.ndarray):
+                    return [make_json_safe(x) for x in obj]
+                elif isinstance(obj, dict):
+                    return {k: make_json_safe(v) for k, v in obj.items()}
+                elif isinstance(obj, list):
+                    return [make_json_safe(x) for x in obj]
+                else:
+                    return obj
+            
+            # Convert data preview to safe format
+            data_preview = cleaned_df.head(10).to_dict('records')
+            safe_data_preview = make_json_safe(data_preview)
+            
             result = {
                 'success': True,
                 'processed_rows': len(cleaned_df),
                 'original_rows': len(df),
                 'columns': list(cleaned_df.columns),
-                'data_preview': cleaned_df.head(10).to_dict('records')
+                'data_preview': safe_data_preview
             }
             
             # Try to add visualization, but don't fail if it doesn't work

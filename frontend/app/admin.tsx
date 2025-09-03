@@ -1217,6 +1217,10 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.5,
   },
+  realDataButton: {
+    backgroundColor: '#059669',
+    marginTop: 12,
+  },
   dataPreview: {
     marginTop: 16,
     backgroundColor: '#334155',

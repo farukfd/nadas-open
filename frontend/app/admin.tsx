@@ -92,6 +92,19 @@ export default function AdminPanel() {
   const [trainingResult, setTrainingResult] = useState<TrainingResult | null>(null);
   const [models, setModels] = useState<MLModel[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  
+  // Backfill States
+  const [backfillConfig, setBackfillConfig] = useState<BackfillConfig>({
+    start_date: '2016-01-01',
+    end_date: '2022-12-31',
+    current_data_months: 12,
+    confidence_threshold: 0.7,
+    models_to_use: ['prophet', 'xgboost']
+  });
+  const [missingPeriods, setMissingPeriods] = useState<any>({});
+  const [backfillResult, setBackfillResult] = useState<BackfillResult | null>(null);
+  const [isRunningBackfill, setIsRunningBackfill] = useState(false);
+  const [backfillVisualization, setBackfillVisualization] = useState<any>(null);
 
   useEffect(() => {
     checkAdminAuth();

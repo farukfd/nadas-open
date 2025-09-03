@@ -359,9 +359,137 @@ async def get_user_profile(current_user: Dict = Depends(get_current_user)):
         "query_limit": current_user['query_limit'],
         "query_count": current_user['query_count'],
         "company_name": current_user.get('company_name'),
+        "tax_number": current_user.get('tax_number'),
         "phone": current_user.get('phone'),
+        "phone_verified": current_user.get('phone_verified', False),
         "created_at": current_user['created_at']
     }
+
+# Profile update endpoint
+@api_router.put("/user/update-profile")
+async def update_user_profile(
+    profile_data: dict, 
+    current_user: Dict = Depends(get_current_user)
+):
+    # Update user profile
+    update_fields = {}
+    
+    if 'first_name' in profile_data:
+        update_fields['first_name'] = profile_data['first_name'].strip()
+    if 'last_name' in profile_data:
+        update_fields['last_name'] = profile_data['last_name'].strip()
+    if 'phone' in profile_data:
+        update_fields['phone'] = profile_data['phone'].strip()
+    if 'company_name' in profile_data:
+        update_fields['company_name'] = profile_data['company_name'].strip()
+    
+    if update_fields:
+        await db.users.update_one(
+            {"id": current_user['id']},
+            {"$set": update_fields}
+        )
+    
+    # Return updated user
+    updated_user = await db.users.find_one({"id": current_user['id']})
+    return {
+        "id": updated_user['id'],
+        "email": updated_user['email'],
+        "first_name": updated_user['first_name'],
+        "last_name": updated_user['last_name'],
+        "user_type": updated_user['user_type'],
+        "query_limit": updated_user['query_limit'],
+        "query_count": updated_user['query_count'],
+        "company_name": updated_user.get('company_name'),
+        "phone": updated_user.get('phone'),
+        "phone_verified": updated_user.get('phone_verified', False),
+        "created_at": updated_user['created_at']
+    }
+
+# Phone verification endpoints
+@api_router.post("/user/send-verification-code")
+async def send_verification_code(
+    phone_data: dict,
+    current_user: Dict = Depends(get_current_user)
+):
+    phone = phone_data.get('phone', '').strip()
+    
+    # Phone validation
+    import re
+    phone_regex = r'^(\+90|0)?[5][0-9]{9}$'
+    if not re.match(phone_regex, phone.replace(' ', '')):
+        raise HTTPException(status_code=400, detail="Geçerli bir telefon numarası girin")
+    
+    # Generate verification code (in production, use SMS service)
+    import random
+    verification_code = f"{random.randint(100000, 999999)}"
+    
+    # Store verification code temporarily (in production, use Redis or cache)
+    await db.verification_codes.replace_one(
+        {"user_id": current_user['id']},
+        {
+            "user_id": current_user['id'],
+            "phone": phone,
+            "code": verification_code,
+            "created_at": datetime.utcnow(),
+            "expires_at": datetime.utcnow() + timedelta(minutes=5)
+        },
+        upsert=True
+    )
+    
+    # In production, send SMS here
+    logger.info(f"Verification code for {phone}: {verification_code}")
+    
+    return {"message": "Doğrulama kodu gönderildi", "phone": phone}
+
+@api_router.post("/user/verify-phone")
+async def verify_phone_code(
+    verification_data: dict,
+    current_user: Dict = Depends(get_current_user)
+):
+    phone = verification_data.get('phone', '').strip()
+    code = verification_data.get('verification_code', '').strip()
+    
+    # Check verification code
+    stored_code = await db.verification_codes.find_one({
+        "user_id": current_user['id'],
+        "phone": phone,
+        "expires_at": {"$gt": datetime.utcnow()}
+    })
+    
+    if not stored_code or stored_code['code'] != code:
+        raise HTTPException(status_code=400, detail="Geçersiz veya süresi dolmuş kod")
+    
+    # Update user as phone verified and increase query limit
+    new_query_limit = current_user['query_limit'] + 5
+    await db.users.update_one(
+        {"id": current_user['id']},
+        {
+            "$set": {
+                "phone": phone,
+                "phone_verified": True,
+                "query_limit": new_query_limit
+            }
+        }
+    )
+    
+    # Delete verification code
+    await db.verification_codes.delete_one({"user_id": current_user['id']})
+    
+    return {
+        "message": "Telefon başarıyla doğrulandı",
+        "new_query_limit": new_query_limit,
+        "bonus_queries": 5
+    }
+
+# Query history endpoint
+@api_router.get("/user/query-history")
+async def get_query_history(current_user: Dict = Depends(get_current_user)):
+    # Get user's query history (you'll need to modify query endpoints to log history)
+    history = await db.query_history.find(
+        {"user_id": current_user['id']}
+    ).sort("created_at", -1).limit(50).to_list(50)
+    
+    return {"query_history": history}
 
 # Health check
 @api_router.get("/health")

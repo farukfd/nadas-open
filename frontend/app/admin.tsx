@@ -892,7 +892,175 @@ export default function AdminPanel() {
     </View>
   );
 
-  const renderSettings = () => (
+  const renderBackfill = () => (
+    <View style={styles.tabContent}>
+      <Text style={styles.tabTitle}>⏰ Geçmiş Veri Backfill Sistemi</Text>
+      
+      <View style={styles.backfillSection}>
+        <Text style={styles.sectionTitle}>📊 Backfill Konfigürasyonu</Text>
+        
+        <View style={styles.configContainer}>
+          <View style={styles.configRow}>
+            <Text style={styles.configLabel}>📅 Başlangıç Tarihi:</Text>
+            <Text style={styles.configValue}>{backfillConfig.start_date}</Text>
+          </View>
+          
+          <View style={styles.configRow}>
+            <Text style={styles.configLabel}>📅 Bitiş Tarihi:</Text>
+            <Text style={styles.configValue}>{backfillConfig.end_date}</Text>
+          </View>
+          
+          <View style={styles.configRow}>
+            <Text style={styles.configLabel}>📈 Güncel Veri (Ay):</Text>
+            <Text style={styles.configValue}>{backfillConfig.current_data_months}</Text>
+          </View>
+          
+          <View style={styles.configRow}>
+            <Text style={styles.configLabel}>🎯 Güven Eşiği:</Text>
+            <Text style={styles.configValue}>{(backfillConfig.confidence_threshold * 100).toFixed(0)}%</Text>
+          </View>
+          
+          <View style={styles.configRow}>
+            <Text style={styles.configLabel}>🤖 Modeller:</Text>
+            <Text style={styles.configValue}>{backfillConfig.models_to_use.join(', ')}</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.backfillSection}>
+        <Text style={styles.sectionTitle}>🔍 Eksik Dönem Tespiti</Text>
+        
+        <TouchableOpacity
+          style={[styles.actionButton, isLoadingData && styles.disabledButton]}
+          onPress={detectMissingPeriods}
+          disabled={isLoadingData}
+        >
+          {isLoadingData ? (
+            <ActivityIndicator color="#ffffff" size="small" />
+          ) : (
+            <Text style={styles.actionButtonText}>🔍 Eksik Dönemleri Tespit Et</Text>
+          )}
+        </TouchableOpacity>
+        
+        {Object.keys(missingPeriods).length > 0 && (
+          <View style={styles.missingPeriodsContainer}>
+            <Text style={styles.missingPeriodsTitle}>
+              📋 {Object.keys(missingPeriods).length} lokasyonda eksik dönem bulundu:
+            </Text>
+            
+            <ScrollView style={styles.missingPeriodsList} nestedScrollEnabled>
+              {Object.entries(missingPeriods).slice(0, 5).map(([location, periods]: [string, any]) => (
+                <View key={location} style={styles.missingPeriodItem}>
+                  <Text style={styles.locationCode}>{location}</Text>
+                  <Text style={styles.periodCount}>{periods.length} eksik dönem</Text>
+                </View>
+              ))}
+              {Object.keys(missingPeriods).length > 5 && (
+                <Text style={styles.moreLocations}>... +{Object.keys(missingPeriods).length - 5} lokasyon daha</Text>
+              )}
+            </ScrollView>
+          </View>
+        )}
+      </View>
+
+      <View style={styles.backfillSection}>
+        <Text style={styles.sectionTitle}>🚀 Backfill İşlemi</Text>
+        
+        <TouchableOpacity
+          style={[
+            styles.actionButton, 
+            styles.backfillButton,
+            (isRunningBackfill || Object.keys(missingPeriods).length === 0) && styles.disabledButton
+          ]}
+          onPress={runBackfill}
+          disabled={isRunningBackfill || Object.keys(missingPeriods).length === 0}
+        >
+          {isRunningBackfill ? (
+            <View style={styles.trainingIndicator}>
+              <ActivityIndicator color="#ffffff" size="small" />
+              <Text style={styles.actionButtonText}>Backfill Çalışıyor...</Text>
+            </View>
+          ) : (
+            <Text style={styles.actionButtonText}>🚀 Backfill İşlemini Başlat</Text>
+          )}
+        </TouchableOpacity>
+        
+        {Object.keys(missingPeriods).length === 0 && (
+          <Text style={styles.warningText}>⚠️ Önce eksik dönemleri tespit edin</Text>
+        )}
+      </View>
+
+      {backfillResult && (
+        <View style={styles.backfillResultSection}>
+          <Text style={styles.sectionTitle}>
+            {backfillResult.success ? '✅ Backfill Sonuçları' : '❌ Backfill Hatası'}
+          </Text>
+          
+          {backfillResult.success ? (
+            <View style={styles.backfillMetrics}>
+              <View style={styles.metricCard}>
+                <Text style={styles.metricLabel}>İşlenen Lokasyon</Text>
+                <Text style={styles.metricValue}>{backfillResult.backfilled_locations}</Text>
+              </View>
+              
+              <View style={styles.metricCard}>
+                <Text style={styles.metricLabel}>Toplam Tahmin</Text>
+                <Text style={styles.metricValue}>{backfillResult.total_predictions}</Text>
+              </View>
+              
+              <View style={styles.metricCard}>
+                <Text style={styles.metricLabel}>Ortalama Güven</Text>
+                <Text style={styles.metricValue}>
+                  %{(backfillResult.avg_confidence * 100).toFixed(1)}
+                </Text>
+              </View>
+              
+              <View style={styles.metricCardWide}>
+                <Text style={styles.metricLabel}>Kullanılan Modeller</Text>
+                <Text style={styles.metricValueSmall}>
+                  {backfillResult.models_used.join(', ')}
+                </Text>
+              </View>
+              
+              <View style={styles.metricCardWide}>
+                <Text style={styles.metricLabel}>Session ID</Text>
+                <Text style={styles.metricValueSmall}>{backfillResult.session_id}</Text>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{backfillResult.error}</Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      <View style={styles.backfillSection}>
+        <Text style={styles.sectionTitle}>📈 Görselleştirme</Text>
+        
+        <TouchableOpacity
+          style={[styles.systemActionButton]}
+          onPress={() => getBackfillVisualization('34001')}  // Istanbul örneği
+        >
+          <Text style={styles.systemActionText}>📊 İstanbul Backfill Grafiği</Text>
+        </TouchableOpacity>
+        
+        {backfillVisualization && (
+          <View style={styles.visualizationContainer}>
+            <Text style={styles.visualizationTitle}>
+              📍 {backfillVisualization.location_code} - Backfill Analizi
+            </Text>
+            <Text style={styles.visualizationStats}>
+              📊 {backfillVisualization.statistics.historical_count} gerçek + {backfillVisualization.statistics.predicted_count} tahmini veri
+            </Text>
+            <Text style={styles.visualizationStats}>
+              🎯 Ortalama güven: %{(backfillVisualization.statistics.avg_confidence * 100).toFixed(1)}
+            </Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
     <View style={styles.tabContent}>
       <Text style={styles.tabTitle}>⚙️ Sistem Ayarları</Text>
       

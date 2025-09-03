@@ -1721,4 +1721,119 @@ const styles = StyleSheet.create({
     color: '#10b981',
     fontSize: 12,
   },
+  
+  // Backfill Styles
+  backfillSection: {
+    backgroundColor: '#1e293b',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 24,
+  },
+  configContainer: {
+    gap: 12,
+  },
+  configRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#334155',
+  },
+  configLabel: {
+    color: '#94a3b8',
+    fontSize: 14,
+    flex: 1,
+  },
+  configValue: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'right',
+  },
+  backfillButton: {
+    backgroundColor: '#7c3aed',
+    marginTop: 12,
+  },
+  missingPeriodsContainer: {
+    marginTop: 16,
+    backgroundColor: '#334155',
+    padding: 16,
+    borderRadius: 8,
+  },
+  missingPeriodsTitle: {
+    color: '#fbbf24',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  missingPeriodsList: {
+    maxHeight: 150,
+  },
+  missingPeriodItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#475569',
+  },
+  locationCode: {
+    color: '#e2e8f0',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  periodCount: {
+    color: '#94a3b8',
+    fontSize: 12,
+  },
+  moreLocations: {
+    color: '#94a3b8',
+    fontSize: 12,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingTop: 8,
+  },
+  backfillResultSection: {
+    backgroundColor: '#1e293b',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 24,
+  },
+  backfillMetrics: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  metricCardWide: {
+    backgroundColor: '#334155',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    width: '100%',
+  },
+  metricValueSmall: {
+    color: '#10b981',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  visualizationContainer: {
+    marginTop: 16,
+    backgroundColor: '#334155',
+    padding: 16,
+    borderRadius: 8,
+  },
+  visualizationTitle: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  visualizationStats: {
+    color: '#94a3b8',
+    fontSize: 14,
+    marginBottom: 4,
+  },
 });

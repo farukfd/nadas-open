@@ -162,10 +162,10 @@ export default function Index() {
           {user ? (
             <TouchableOpacity 
               style={styles.userMenu}
-              onPress={() => setUser(null)}
+              onPress={() => router.push('/profile')}
             >
               <Text style={styles.userMenuText}>{user.first_name}</Text>
-              <Text style={styles.userMenuSubtext}>Çıkış</Text>
+              <Text style={styles.userMenuSubtext}>Profile</Text>
             </TouchableOpacity>
           ) : (
             <View style={styles.authButtons}>

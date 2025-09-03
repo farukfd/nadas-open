@@ -1128,6 +1128,76 @@ export default function AdminPanel() {
         </View>
       </View>
 
+      {/* CSV Upload Section */}
+      <View style={styles.settingsSection}>
+        <Text style={styles.sectionTitle}>📂 CSV Veri Yükleme</Text>
+        
+        <View style={styles.csvUploadContainer}>
+          <TouchableOpacity 
+            style={styles.csvUploadButton}
+            onPress={selectAndUploadCSV}
+          >
+            <Text style={styles.csvUploadButtonText}>📄 CSV Dosyası Seç</Text>
+          </TouchableOpacity>
+          
+          {csvFile && (
+            <View style={styles.csvFileInfo}>
+              <Text style={styles.csvFileName}>📁 {csvFile.name}</Text>
+              <Text style={styles.csvFileSize}>
+                📊 {csvFile.rows} satır • {csvFile.type}
+              </Text>
+              
+              <TouchableOpacity 
+                style={[styles.csvProcessButton, isUploadingCSV && styles.disabledButton]}
+                onPress={processCSV}
+                disabled={isUploadingCSV}
+              >
+                {isUploadingCSV ? (
+                  <View style={styles.trainingIndicator}>
+                    <ActivityIndicator color="#ffffff" size="small" />
+                    <Text style={styles.csvProcessButtonText}>İşleniyor...</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.csvProcessButtonText}>⚡ CSV'yi İşle</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+          
+          {csvResult && (
+            <View style={styles.csvResultContainer}>
+              <Text style={[
+                styles.csvResultTitle,
+                csvResult.success ? styles.csvResultSuccess : styles.csvResultError
+              ]}>
+                {csvResult.success ? '✅ CSV Başarıyla İşlendi' : '❌ CSV İşleme Hatası'}
+              </Text>
+              
+              {csvResult.success && (
+                <View style={styles.csvResultStats}>
+                  <Text style={styles.csvResultText}>
+                    📊 Toplam: {csvResult.total_rows} satır
+                  </Text>
+                  <Text style={styles.csvResultText}>
+                    ✅ İşlenen: {csvResult.records_processed} kayıt
+                  </Text>
+                  <Text style={styles.csvResultText}>
+                    ❌ Hata: {csvResult.errors_count} adet
+                  </Text>
+                  <Text style={styles.csvResultText}>
+                    📂 Tip: {csvResult.data_type}
+                  </Text>
+                </View>
+              )}
+              
+              {csvResult.error && (
+                <Text style={styles.csvResultError}>{csvResult.error}</Text>
+              )}
+            </View>
+          )}
+        </View>
+      </View>
+
       <View style={styles.systemActions}>
         <TouchableOpacity style={styles.systemActionButton}>
           <Text style={styles.systemActionText}>🔄 Veri Güncelle</Text>

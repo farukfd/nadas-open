@@ -496,7 +496,210 @@ export default function AdminPanel() {
     </View>
   );
 
-  const renderSettings = () => (
+  const renderDataProcessing = () => (
+    <View style={styles.tabContent}>
+      <Text style={styles.tabTitle}>📊 Veri İşleme & Yönetimi</Text>
+      
+      <View style={styles.dataSection}>
+        <Text style={styles.sectionTitle}>Veri Yükleme</Text>
+        
+        <TouchableOpacity 
+          style={[styles.actionButton, isLoadingData ? styles.disabledButton : null]}
+          onPress={loadSampleData}
+          disabled={isLoadingData}
+        >
+          {isLoadingData ? (
+            <ActivityIndicator color="#ffffff" size="small" />
+          ) : (
+            <Text style={styles.actionButtonText}>📈 Örnek Veri Yükle</Text>
+          )}
+        </TouchableOpacity>
+        
+        {sampleData.length > 0 && (
+          <View style={styles.dataPreview}>
+            <Text style={styles.dataPreviewTitle}>
+              📋 Yüklenen Veri: {sampleData.length} kayıt
+            </Text>
+            
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.dataTable}>
+                <View style={styles.dataRow}>
+                  <Text style={styles.dataHeader}>Tarih</Text>
+                  <Text style={styles.dataHeader}>Fiyat (TL/m²)</Text>
+                  <Text style={styles.dataHeader}>Lokasyon</Text>
+                  <Text style={styles.dataHeader}>Tip</Text>
+                </View>
+                
+                {sampleData.slice(0, 5).map((item, index) => (
+                  <View key={index} style={styles.dataRow}>
+                    <Text style={styles.dataCell}>{item.date}</Text>
+                    <Text style={styles.dataCell}>{Math.round(item.price).toLocaleString('tr-TR')}</Text>
+                    <Text style={styles.dataCell}>{item.location_code}</Text>
+                    <Text style={styles.dataCell}>{item.property_type}</Text>
+                  </View>
+                ))}
+                
+                {sampleData.length > 5 && (
+                  <View style={styles.dataRow}>
+                    <Text style={styles.dataCellMore}>... +{sampleData.length - 5} kayıt daha</Text>
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+          </View>
+        )}
+      </View>
+
+      <View style={styles.dataSection}>
+        <Text style={styles.sectionTitle}>Veri Temizleme Seçenekleri</Text>
+        
+        <View style={styles.optionsContainer}>
+          <View style={styles.optionItem}>
+            <Text style={styles.optionLabel}>✅ Eksik verileri doldur</Text>
+            <Text style={styles.optionDescription}>Interpolasyon ile eksik değerleri tamamla</Text>
+          </View>
+          
+          <View style={styles.optionItem}>
+            <Text style={styles.optionLabel}>🔍 Aykırı değerleri temizle</Text>
+            <Text style={styles.optionDescription}>IQR yöntemi ile outlier'ları kaldır</Text>
+          </View>
+          
+          <View style={styles.optionItem}>
+            <Text style={styles.optionLabel}>📅 Zaman özelliklerini oluştur</Text>
+            <Text style={styles.optionDescription}>Tarih bazlı özellikler ve gecikme değişkenleri</Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderModelTraining = () => (
+    <View style={styles.tabContent}>
+      <Text style={styles.tabTitle}>🤖 Makine Öğrenimi Model Eğitimi</Text>
+      
+      <View style={styles.modelSection}>
+        <Text style={styles.sectionTitle}>Model Seçimi</Text>
+        
+        <View style={styles.modelGrid}>
+          {[
+            { id: 'linear_regression', name: 'Linear Regression', desc: 'Basit doğrusal regresyon' },
+            { id: 'ridge_regression', name: 'Ridge Regression', desc: 'L2 regularizasyonlu regresyon' },
+            { id: 'random_forest', name: 'Random Forest', desc: 'Ensemble ağaç modeli' },
+            { id: 'xgboost', name: 'XGBoost', desc: 'Gradient boosting modeli' },
+            { id: 'prophet', name: 'Prophet', desc: 'Zaman serisi tahmini' },
+          ].map((model) => (
+            <TouchableOpacity
+              key={model.id}
+              style={[
+                styles.modelCard,
+                selectedModel === model.id && styles.selectedModelCard
+              ]}
+              onPress={() => setSelectedModel(model.id)}
+            >
+              <Text style={[
+                styles.modelName,
+                selectedModel === model.id && styles.selectedModelName
+              ]}>
+                {model.name}
+              </Text>
+              <Text style={styles.modelDesc}>{model.desc}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.trainingSection}>
+        <Text style={styles.sectionTitle}>Model Eğitimi</Text>
+        
+        <TouchableOpacity
+          style={[
+            styles.trainButton,
+            (isTraining || sampleData.length === 0) && styles.disabledButton
+          ]}
+          onPress={trainModel}
+          disabled={isTraining || sampleData.length === 0}
+        >
+          {isTraining ? (
+            <View style={styles.trainingIndicator}>
+              <ActivityIndicator color="#ffffff" size="small" />
+              <Text style={styles.trainButtonText}>Model Eğitiliyor...</Text>
+            </View>
+          ) : (
+            <Text style={styles.trainButtonText}>🚀 Model Eğitimini Başlat</Text>
+          )}
+        </TouchableOpacity>
+        
+        {sampleData.length === 0 && (
+          <Text style={styles.warningText}>⚠️ Önce veri yükleyin</Text>
+        )}
+      </View>
+
+      {trainingResult && (
+        <View style={styles.resultSection}>
+          <Text style={styles.sectionTitle}>
+            {trainingResult.success ? '✅ Eğitim Sonuçları' : '❌ Eğitim Hatası'}
+          </Text>
+          
+          {trainingResult.success ? (
+            <View style={styles.metricsContainer}>
+              <View style={styles.metricCard}>
+                <Text style={styles.metricLabel}>R² Score</Text>
+                <Text style={styles.metricValue}>
+                  {trainingResult.metrics?.test_r2?.toFixed(3) || 'N/A'}
+                </Text>
+              </View>
+              
+              <View style={styles.metricCard}>
+                <Text style={styles.metricLabel}>RMSE</Text>
+                <Text style={styles.metricValue}>
+                  {trainingResult.metrics?.test_rmse?.toFixed(0) || 'N/A'}
+                </Text>
+              </View>
+              
+              <View style={styles.metricCard}>
+                <Text style={styles.metricLabel}>Eğitim Süresi</Text>
+                <Text style={styles.metricValue}>
+                  {trainingResult.training_time?.toFixed(1) || 'N/A'}s
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{trainingResult.error}</Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      <View style={styles.modelsListSection}>
+        <Text style={styles.sectionTitle}>📋 Eğitilmiş Modeller</Text>
+        
+        {models.length === 0 ? (
+          <Text style={styles.noModelsText}>Henüz eğitilmiş model yok</Text>
+        ) : (
+          <FlatList
+            data={models}
+            keyExtractor={(item) => item.model_id}
+            renderItem={({ item }) => (
+              <View style={styles.modelListCard}>
+                <View style={styles.modelListInfo}>
+                  <Text style={styles.modelListName}>{item.model_type}</Text>
+                  <Text style={styles.modelListDate}>
+                    {new Date(item.created_at).toLocaleDateString('tr-TR')}
+                  </Text>
+                  <Text style={styles.modelListMetrics}>
+                    R²: {item.metrics.test_r2.toFixed(3)} | 
+                    RMSE: {item.metrics.test_rmse.toFixed(0)}
+                  </Text>
+                </View>
+              </View>
+            )}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
+      </View>
+    </View>
+  );
     <View style={styles.tabContent}>
       <Text style={styles.tabTitle}>⚙️ Sistem Ayarları</Text>
       

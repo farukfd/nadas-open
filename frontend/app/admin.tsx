@@ -337,7 +337,107 @@ export default function AdminPanel() {
     }
   };
 
-  const trainModel = async () => {
+  const detectMissingPeriods = async () => {
+    setIsLoadingData(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return;
+
+      const response = await fetch(`${EXPO_BACKEND_URL}/api/admin/backfill/detect-missing`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${JSON.parse(token)}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(backfillConfig),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMissingPeriods(data.missing_periods);
+        
+        Alert.alert('Eksik Dönemler Tespit Edildi!', 
+          `📊 ${data.statistics.locations_with_missing_data} lokasyonda toplam ${data.statistics.total_missing_periods} eksik dönem bulundu.\n\n⏰ Tarih Aralığı: ${data.statistics.date_range.start} - ${data.statistics.date_range.end}`
+        );
+      } else {
+        Alert.alert('Hata', 'Eksik dönem tespiti başarısız');
+      }
+    } catch (error) {
+      console.error('Error detecting missing periods:', error);
+      Alert.alert('Hata', 'Bağlantı hatası');
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  const runBackfill = async () => {
+    if (!Object.keys(missingPeriods).length) {
+      Alert.alert('Uyarı', 'Önce eksik dönemleri tespit edin!');
+      return;
+    }
+
+    setIsRunningBackfill(true);
+    setBackfillResult(null);
+
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return;
+
+      const response = await fetch(`${EXPO_BACKEND_URL}/api/admin/backfill/run`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${JSON.parse(token)}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(backfillConfig),
+      });
+
+      const result = await response.json();
+      setBackfillResult(result);
+
+      if (result.success) {
+        Alert.alert('Backfill Tamamlandı! 🎉', 
+          `✅ ${result.backfilled_locations} lokasyon işlendi\n📊 ${result.total_predictions} tahmin yapıldı\n🎯 Ortalama güven: %${(result.avg_confidence * 100).toFixed(1)}\n🤖 Kullanılan modeller: ${result.models_used.join(', ')}`
+        );
+      } else {
+        Alert.alert('Hata', result.error || 'Backfill işlemi başarısız');
+      }
+    } catch (error) {
+      console.error('Error running backfill:', error);
+      Alert.alert('Hata', 'Bağlantı hatası');
+    } finally {
+      setIsRunningBackfill(false);
+    }
+  };
+
+  const getBackfillVisualization = async (locationCode: string) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return;
+
+      const response = await fetch(
+        `${EXPO_BACKEND_URL}/api/admin/backfill/visualization?location_code=${locationCode}`, 
+        {
+          headers: {
+            'Authorization': `Bearer ${JSON.parse(token)}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setBackfillVisualization(data);
+        
+        Alert.alert('Görselleştirme Hazır!', 
+          `📈 ${data.statistics.historical_count} gerçek + ${data.statistics.predicted_count} tahmini veri\n🎯 Ortalama güven: %${(data.statistics.avg_confidence * 100).toFixed(1)}`
+        );
+      }
+    } catch (error) {
+      console.error('Error getting backfill visualization:', error);
+      Alert.alert('Hata', 'Görselleştirme yüklenemedi');
+    }
+  };
     if (sampleData.length === 0) {
       Alert.alert('Uyarı', 'Önce veri yükleyin!');
       return;

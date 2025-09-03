@@ -397,20 +397,33 @@ class MLPipeline:
             # Convert to DataFrame
             df = pd.DataFrame(data)
             
+            if df.empty:
+                return {
+                    'success': False,
+                    'error': 'No data provided'
+                }
+            
             # Clean and prepare data
             cleaned_df = self.data_processor.clean_data(df, options)
             
-            # Generate visualization
-            price_chart = DataVisualization.create_price_trend_chart(cleaned_df)
-            
-            return {
+            # Generate visualization (simplified to avoid plotly issues)
+            result = {
                 'success': True,
                 'processed_rows': len(cleaned_df),
                 'original_rows': len(df),
                 'columns': list(cleaned_df.columns),
-                'data_preview': cleaned_df.head(10).to_dict('records'),
-                'visualization': price_chart
+                'data_preview': cleaned_df.head(10).to_dict('records')
             }
+            
+            # Try to add visualization, but don't fail if it doesn't work
+            try:
+                price_chart = DataVisualization.create_price_trend_chart(cleaned_df)
+                result['visualization'] = price_chart
+            except Exception as viz_error:
+                logger.warning(f"Could not create visualization: {str(viz_error)}")
+                result['visualization'] = None
+            
+            return result
             
         except Exception as e:
             logger.error(f"Error processing data: {str(e)}")

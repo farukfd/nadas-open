@@ -1034,7 +1034,7 @@ async def upload_csv_data(
         import pandas as pd
         
         # Decode base64 content
-        csv_content = base64.b64decode(file_content).decode('utf-8')
+        csv_content = base64.b64decode(request.file_content).decode('utf-8')
         
         # Read CSV data
         df = pd.read_csv(io.StringIO(csv_content))

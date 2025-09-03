@@ -1035,6 +1035,242 @@ async def get_backfill_visualization_admin(
         logger.error(f"Error generating backfill visualization: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Visualization error: {str(e)}")
 
+@api_router.get("/admin/backfill/visualization")
+async def get_backfill_visualization(
+    location_code: str = Query(..., description="Location code to visualize"),
+    session_id: str = Query(..., description="Backfill session ID"),
+    admin_user: Dict = Depends(verify_admin_user)
+):
+    """Get backfill results visualization"""
+    try:
+        results = await db.backfill_results.find({
+            "session_id": session_id,
+            "location_code": location_code
+        }).to_list(1000)
+        
+        if not results:
+            raise HTTPException(status_code=404, detail="No results found for this session")
+        
+        # Create plotly visualization
+        import plotly.graph_objects as go
+        from plotly.utils import PlotlyJSONEncoder
+        import json
+        
+        dates = []
+        prices = []
+        confidence_colors = []
+        is_predicted_flags = []
+        
+        for result in results:
+            dates.append(result['date'])
+            prices.append(result['price'])
+            is_predicted_flags.append(result.get('is_predicted', False))
+            
+            # Color based on confidence score
+            confidence = result.get('confidence_score', 0.5)
+            if result.get('is_predicted', False):
+                if confidence > 0.8:
+                    confidence_colors.append('yellow')  # High confidence prediction
+                elif confidence > 0.6:
+                    confidence_colors.append('orange')  # Medium confidence prediction
+                else:
+                    confidence_colors.append('red')     # Low confidence prediction
+            else:
+                confidence_colors.append('blue')       # Historical data
+        
+        # Create figure
+        fig = go.Figure()
+        
+        fig.add_trace(go.Scatter(
+            x=dates,
+            y=prices,
+            mode='lines+markers',
+            marker=dict(color=confidence_colors, size=6),
+            line=dict(width=2),
+            name=f'{location_code} - Fiyat Trendi',
+            hovertemplate='<b>Tarih:</b> %{x}<br><b>Fiyat:</b> ₺%{y:,.0f}<br><extra></extra>'
+        ))
+        
+        fig.update_layout(
+            title=f'{location_code} - Emlak Fiyat Trendi (Backfill)',
+            xaxis_title='Tarih',
+            yaxis_title='Fiyat (₺)',
+            hovermode='x unified',
+            template='plotly_white',
+            width=800,
+            height=500
+        )
+        
+        # Convert to JSON
+        fig_json = json.dumps(fig, cls=PlotlyJSONEncoder)
+        
+        # Statistics
+        historical_count = sum(1 for r in results if not r.get('is_predicted', False))
+        predicted_count = sum(1 for r in results if r.get('is_predicted', False))
+        
+        return {
+            "visualization": fig_json,
+            "statistics": {
+                "total_points": len(results),
+                "historical_count": historical_count,
+                "predicted_count": predicted_count,
+                "location_code": location_code,
+                "session_id": session_id
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Visualization error: {e}")
+        raise HTTPException(status_code=500, detail=f"Visualization generation failed: {str(e)}")
+
+# CSV Upload endpoint for Admin Panel
+@api_router.post("/admin/data/upload-csv")
+async def upload_csv_data(
+    file_content: str = Field(..., description="Base64 encoded CSV content"),
+    file_name: str = Field(..., description="Original filename"),
+    data_type: str = Field(..., description="Data type: users, locations, prices"),
+    admin_user: Dict = Depends(verify_admin_user)
+):
+    """Upload and process CSV data"""
+    try:
+        import base64
+        import io
+        import pandas as pd
+        
+        # Decode base64 content
+        csv_content = base64.b64decode(file_content).decode('utf-8')
+        
+        # Read CSV data
+        df = pd.read_csv(io.StringIO(csv_content))
+        
+        if df.empty:
+            raise HTTPException(status_code=400, detail="CSV dosyası boş")
+        
+        records_processed = 0
+        errors = []
+        
+        if data_type == "users":
+            # Process user data
+            required_columns = ['email', 'first_name', 'last_name', 'user_type']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            
+            if missing_columns:
+                raise HTTPException(status_code=400, detail=f"Eksik kolonlar: {missing_columns}")
+            
+            for index, row in df.iterrows():
+                try:
+                    user_data = {
+                        "id": f"csv_user_{uuid.uuid4().hex[:8]}",
+                        "email": row['email'].strip().lower(),
+                        "first_name": row['first_name'].strip(),
+                        "last_name": row['last_name'].strip(),
+                        "user_type": row['user_type'].strip().lower(),
+                        "password_hash": bcrypt.hashpw("temp123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),
+                        "query_count": 0,
+                        "query_limit": 5 if row['user_type'].strip().lower() == 'individual' else 10,
+                        "phone_verified": False,
+                        "is_active": True,
+                        "created_at": datetime.utcnow()
+                    }
+                    
+                    # Check if user already exists
+                    existing_user = await db.users.find_one({"email": user_data["email"]})
+                    if not existing_user:
+                        await db.users.insert_one(user_data)
+                        records_processed += 1
+                    else:
+                        errors.append(f"Satır {index + 1}: E-posta zaten mevcut ({user_data['email']})")
+                        
+                except Exception as e:
+                    errors.append(f"Satır {index + 1}: {str(e)}")
+        
+        elif data_type == "locations":
+            # Process location data
+            required_columns = ['il', 'ilce', 'mahalle']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            
+            if missing_columns:
+                raise HTTPException(status_code=400, detail=f"Eksik kolonlar: {missing_columns}")
+            
+            for index, row in df.iterrows():
+                try:
+                    location_data = {
+                        "id": f"csv_loc_{uuid.uuid4().hex[:8]}",
+                        "il": row['il'].strip(),
+                        "ilce": row['ilce'].strip(),
+                        "mahalle": row['mahalle'].strip(),
+                        "coordinates": [
+                            float(row.get('latitude', 41.0)),
+                            float(row.get('longitude', 29.0))
+                        ],
+                        "population": int(row.get('population', 10000)),
+                        "average_income": float(row.get('average_income', 50000)),
+                        "created_at": datetime.utcnow()
+                    }
+                    
+                    # Check if location already exists
+                    existing_location = await db.locations.find_one({
+                        "il": location_data["il"],
+                        "ilce": location_data["ilce"],
+                        "mahalle": location_data["mahalle"]
+                    })
+                    
+                    if not existing_location:
+                        await db.locations.insert_one(location_data)
+                        records_processed += 1
+                    else:
+                        errors.append(f"Satır {index + 1}: Lokasyon zaten mevcut")
+                        
+                except Exception as e:
+                    errors.append(f"Satır {index + 1}: {str(e)}")
+        
+        elif data_type == "prices":
+            # Process price data
+            required_columns = ['location_id', 'date', 'price', 'property_type']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            
+            if missing_columns:
+                raise HTTPException(status_code=400, detail=f"Eksik kolonlar: {missing_columns}")
+            
+            for index, row in df.iterrows():
+                try:
+                    price_data = {
+                        "id": f"csv_price_{uuid.uuid4().hex[:8]}",
+                        "location_id": row['location_id'].strip(),
+                        "date": datetime.strptime(row['date'], '%Y-%m-%d'),
+                        "price": float(row['price']),
+                        "property_type": row['property_type'].strip(),
+                        "data_source": "csv_upload",
+                        "created_at": datetime.utcnow()
+                    }
+                    
+                    await db.price_indices.insert_one(price_data)
+                    records_processed += 1
+                        
+                except Exception as e:
+                    errors.append(f"Satır {index + 1}: {str(e)}")
+        
+        else:
+            raise HTTPException(status_code=400, detail="Geçersiz veri tipi. Desteklenen: users, locations, prices")
+        
+        return {
+            "message": "CSV yükleme tamamlandı",
+            "file_name": file_name,
+            "total_rows": len(df),
+            "records_processed": records_processed,
+            "errors_count": len(errors),
+            "errors": errors[:10] if errors else [],  # First 10 errors only
+            "data_type": data_type
+        }
+        
+    except pd.errors.EmptyDataError:
+        raise HTTPException(status_code=400, detail="CSV dosyası okunamadı veya boş")
+    except pd.errors.ParserError as e:
+        raise HTTPException(status_code=400, detail=f"CSV formatı hatalı: {str(e)}")
+    except Exception as e:
+        logger.error(f"CSV upload error: {e}")
+        raise HTTPException(status_code=500, detail=f"CSV yükleme hatası: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 

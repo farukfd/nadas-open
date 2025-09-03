@@ -79,15 +79,25 @@ agenthub/agents/youtube/db
 # Mobile development
 android-sdk/ ee2401_db.sql
 ee2401_db.sql
--e 
 # Environment files
 *.env
 *.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
+
+# Test files (development only)
+backend_test.py
+comprehensive_backfill_test.py
+backfill_system_test.py
+backfill_test_results.log
+detailed_status_report.md
+test_result.md
+
+# Large data files
+ee2401_db.sql
+ee2401_db.zip
+
+# Development files
+.emergent/
+.gitconfig
+
+# ML Models (generated at runtime)
+backend/models/*.pkl

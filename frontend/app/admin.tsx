@@ -38,6 +38,27 @@ interface AdminStats {
   monthlyRevenue: number;
 }
 
+interface MLModel {
+  model_id: string;
+  model_type: string;
+  created_at: string;
+  metrics: {
+    test_r2: number;
+    test_rmse: number;
+    test_mae: number;
+  };
+  data_shape: [number, number];
+}
+
+interface TrainingResult {
+  success: boolean;
+  model_id?: string;
+  model_type?: string;
+  training_time?: number;
+  metrics?: any;
+  error?: string;
+}
+
 export default function AdminPanel() {
   const [adminUser, setAdminUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);

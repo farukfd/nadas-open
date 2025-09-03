@@ -1045,7 +1045,7 @@ async def upload_csv_data(
         records_processed = 0
         errors = []
         
-        if data_type == "users":
+        if request.data_type == "users":
             # Process user data
             required_columns = ['email', 'first_name', 'last_name', 'user_type']
             missing_columns = [col for col in required_columns if col not in df.columns]

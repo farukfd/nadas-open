@@ -700,6 +700,8 @@ export default function AdminPanel() {
       </View>
     </View>
   );
+
+  const renderSettings = () => (
     <View style={styles.tabContent}>
       <Text style={styles.tabTitle}>⚙️ Sistem Ayarları</Text>
       
@@ -717,8 +719,13 @@ export default function AdminPanel() {
         </View>
         
         <View style={styles.settingItem}>
+          <Text style={styles.settingLabel}>ML Pipeline</Text>
+          <Text style={styles.settingValue}>🟢 Hazır</Text>
+        </View>
+        
+        <View style={styles.settingItem}>
           <Text style={styles.settingLabel}>Son Veri Güncelleme</Text>
-          <Text style={styles.settingValue}>31 Ağustos 2025</Text>
+          <Text style={styles.settingValue}>3 Eylül 2025</Text>
         </View>
         
         <View style={styles.settingItem}>

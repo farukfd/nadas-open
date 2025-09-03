@@ -588,12 +588,20 @@ async def train_model_admin(
             MLModelType.PROPHET
         ]
         
+        if not model_type:
+            raise HTTPException(status_code=400, detail="model_type is required")
+        
         if model_type not in valid_models:
-            raise HTTPException(status_code=400, detail=f"Invalid model type. Must be one of: {valid_models}")
+            raise HTTPException(status_code=400, detail=f"Invalid model type '{model_type}'. Must be one of: {valid_models}")
+        
+        if not data:
+            raise HTTPException(status_code=400, detail="Training data is required")
         
         result = await ml_pipeline.train_model(data, model_config)
         return result
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error training model: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Model training error: {str(e)}")

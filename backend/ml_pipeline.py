@@ -299,13 +299,21 @@ class ModelTrainer:
             'test_r2': safe_metric(r2_score(y_test, y_pred_test))
         }
     
-    def _save_model(self, model, model_type: str) -> str:
+    def _save_model(self, model, model_type: str, feature_names: List[str] = None) -> str:
         """Save model to disk and return model ID"""
         model_id = f"{model_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         model_path = Path(f"/app/backend/models/{model_id}.pkl")
         model_path.parent.mkdir(exist_ok=True)
         
-        joblib.dump(model, model_path)
+        # Save model with metadata
+        model_data = {
+            'model': model,
+            'feature_names': feature_names or [],
+            'model_type': model_type,
+            'created_at': datetime.now().isoformat()
+        }
+        
+        joblib.dump(model_data, model_path)
         logger.info(f"Model saved: {model_path}")
         
         return model_id

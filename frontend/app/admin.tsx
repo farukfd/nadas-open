@@ -438,6 +438,8 @@ export default function AdminPanel() {
       Alert.alert('Hata', 'Görselleştirme yüklenemedi');
     }
   };
+
+  const trainModel = async () => {
     if (sampleData.length === 0) {
       Alert.alert('Uyarı', 'Önce veri yükleyin!');
       return;

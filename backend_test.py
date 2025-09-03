@@ -30,15 +30,15 @@ class BackendTester:
         if details:
             print(f"   Details: {details}")
     
-    def make_request(self, method: str, endpoint: str, data: Dict = None, headers: Dict = None) -> tuple:
+    def make_request(self, method: str, endpoint: str, data: Dict = None, headers: Dict = None, timeout: int = 30) -> tuple:
         """Make HTTP request and return (success, response_data, status_code)"""
         url = f"{self.base_url}{endpoint}"
         
         try:
             if method.upper() == "GET":
-                response = requests.get(url, headers=headers, timeout=30)
+                response = requests.get(url, headers=headers, timeout=timeout)
             elif method.upper() == "POST":
-                response = requests.post(url, json=data, headers=headers, timeout=30)
+                response = requests.post(url, json=data, headers=headers, timeout=timeout)
             else:
                 return False, f"Unsupported method: {method}", 0
                 

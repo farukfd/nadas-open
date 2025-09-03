@@ -1,0 +1,142 @@
+<analysis>
+The trajectory describes the development of a real estate index mobile application, initially requested as a website-to-mobile conversion. The AI engineer started by analyzing an SQL database, deducing core features like real estate listings, geographic data, and a content management system. This evolved into a sophisticated Emlak Endeksi app, competitive with Endeksa.com, incorporating user management (guest, individual, corporate with free queries and package sales), m2 price time series, and demographic analysis.
+
+Key development phases included setting up the FastAPI backend and Expo React Native frontend, implementing user authentication (login/register), a query system, and a custom map with interactive features like heatmap, favorites, and comparison tools. A significant turn was the user's request to match 's corporate identity, leading to extensive UI/UX adjustments, including integrating specific background images and styling. Several bugs, including cache issues, CSS errors, and network timeouts, were identified and resolved, with the help of a  for complex problems. The project is currently focused on achieving a Production Ready System, addressing critical authentication, data integration, and missing page functionalities.
+</analysis>
+
+<product_requirements>
+The user initially requested a mobile application conversion from a provided website database (). This evolved into a Real Estate Index (Emlak Endeksi) platform, aiming to be more advanced than .
+
+**Core Features:**
+*   **User Management:** Guest users (3 free queries), individual/corporate members (5 free queries, extendable to 10 with phone verification), and a package sales/payment system.
+*   **Real Estate Index:** Display m2 unit price time series from 2005-2025 for all cities, districts, and neighborhoods in Turkey.
+*   **Demographic Analysis:** Provide neighborhood-specific demographic, education, and economic data.
+*   **Categories:** Support for for sale residential/commercial and for rent residential/commercial/land.
+*   **Smart Map System:** Custom map integration using existing neighborhood coordinates (e.g., Istanbul Arnavutköy), featuring interactive elements like heatmap, advanced filters, favorite locations, comparison tools, and price alarms.
+
+**Emlakekspertizi.com Branding & UI:**
+*   Integrate corporate colors (blue-white) and homepage visual elements from .
+*   Implement a Google-like search engine on the homepage for city/district/neighborhood-based searches, with results leading to a detail page with a smart map transition button.
+*   Update membership registration fields (individual: name, surname, email, phone; corporate: + company name, tax ID).
+
+**Payment System:**
+*   Detailed report on payment methods for , including integration with Turkish payment gateways (Iyzico, PayTR) and international options (Stripe), package strategies, security, and legal compliance.
+</product_requirements>
+
+<key_technical_concepts>
+- **Frontend**: Expo React Native, Expo Router (file-based routing), React Native Maps (for custom map), AsyncStorage (local storage for favorites/alarms).
+- **Backend**: FastAPI (Python web framework) with MongoDB (NoSQL database).
+- **Authentication**: JWT (JSON Web Tokens) for user sessions.
+- **UI/UX**:  for styling,  for keyboard handling,  for safe areas, , .
+- **Data Handling**:  for environment variables,  for HTTP requests,  for network timeouts.
+- **Development Tools**: backend                          STOPPING  
+code-server                      RUNNING   pid 33, uptime 0:00:06
+expo                             STOPPED   Sep 03 08:19 PM
+mongodb                          RUNNING   pid 36, uptime 0:00:06
+supervisor>  for service management, npm <command>
+
+Usage:
+
+npm install        install all the dependencies in your project
+npm install <foo>  add the <foo> dependency to your project
+npm test           run this project's tests
+npm run <foo>      run the script named <foo>
+npm <command> -h   quick help on <command>
+npm -l             display usage info for all commands
+npm help <term>    search for help on <term>
+npm help npm       more involved overview
+
+All commands:
+
+    access, adduser, audit, bugs, cache, ci, completion,
+    config, dedupe, deprecate, diff, dist-tag, docs, doctor,
+    edit, exec, explain, explore, find-dupes, fund, get, help,
+    help-search, hook, init, install, install-ci-test,
+    install-test, link, ll, login, logout, ls, org, outdated,
+    owner, pack, ping, pkg, prefix, profile, prune, publish,
+    query, rebuild, repo, restart, root, run-script, sbom,
+    search, set, shrinkwrap, star, stars, start, stop, team,
+    test, token, uninstall, unpublish, unstar, update, version,
+    view, whoami
+
+Specify configs in the ini-formatted file:
+    /root/.npmrc
+or on the command line via: npm <command> --key=value
+
+More configuration info: npm help config
+Configuration fields: npm help 7 config
+
+npm@10.8.2 /usr/lib/node_modules/npm for package management.
+</key_technical_concepts>
+
+<code_architecture>
+The application follows a full-stack architecture:
+*   **Frontend**: Built with Expo React Native, utilizing  for file-based routing, located in .
+*   **Backend**: Developed with FastAPI, handling API endpoints and MongoDB interactions, located in .
+*   **Database**: MongoDB is used for data storage, configured via .
+
+**Directory Structure:**
+
+
+**Key Files and Changes:**
+*   :
+    *   **Importance**: Core FastAPI application, defines all backend API endpoints.
+    *   **Changes**: Initial setup for authentication, location data, query handling. Modified to include an API for map locations, improved JWT error handling, and integrated  for environment variables.
+*   :
+    *   **Importance**: Populates the MongoDB database with initial sample data (locations, price indexes, users) for development and testing.
+    *   **Changes**: Created to provide initial data.
+*   :
+    *   **Importance**: The main entry point and home screen of the mobile application, responsible for navigation and displaying the primary search interface.
+    *   **Changes**: Extensively modified to include navigation links (login, register, query, map), implement the Google-like search bar, integrate 's corporate visual design (background image, colors, specific text elements, button styles), fix CSS issues (deprecated  and ), and implement a network timeout and loading state for .
+*   :
+    *   **Importance**: Handles user authentication (login).
+    *   **Changes**: Implemented login logic, API calls, and local storage of JWT token.
+*   :
+    *   **Importance**: Manages user registration for individual and corporate accounts.
+    *   **Changes**: Configured to accept specific user fields (name, surname, email, phone, company name, tax ID), and corrected a duplicate  declaration.
+*   :
+    *   **Importance**: Provides an interface for users to perform real estate index queries.
+    *   **Changes**: Initial creation for query functionality.
+*   :
+    *   **Importance**: Implements the interactive smart map system displaying real estate data.
+    *   **Changes**: Initially created with , later adapted with a web-specific alternative to address  web support issues. Enhanced with heatmap visualization, advanced filters, favorite location management, and a comparison tool.
+*   :
+    *   **Importance**: Placeholder for push notification system.
+    *   **Changes**: Created.
+*   :
+    *   **Importance**: Displays detailed information for a selected property or location.
+    *   **Changes**: Created and later enriched to include demographic data, a favorite adding option, property type selection, and associated styles.
+*   :
+    *   **Importance**: Represents the UI for an administrative panel.
+    *   **Changes**: Created as an empty component.
+*   :
+    *   **Importance**: UI for the user's profile page.
+    *   **Changes**: Created as an empty component.
+*   :
+    *   **Importance**: UI for phone number verification.
+    *   **Changes**: Created as an empty component.
+*   :
+    *   **Importance**: Documentation for testing protocols and recording test outcomes.
+    *   **Changes**: Updated after backend tests.
+</code_architecture>
+
+<pending_tasks>
+-   **Missing Pages**: , , , , , .
+-   **Missing Backend APIs**: User profile update, send/verify phone verification code, query history, packages, payment creation/verification, all admin panel endpoints.
+-   **Real Data Integration**: Transferring  data to MongoDB, loading 81 cities, 963 districts, and actual price index data, integrating real demographic data.
+-   **Payment System**: Full Iyzico integration, package management, payment verification, invoice generation.
+-   **Admin Panel Backend**: Implement backend logic for user management, dashboard statistics, and system settings.
+-   **System Optimization**: Database query optimization, frontend performance, mobile responsive fixes, cross-browser testing, and documentation.
+</pending_tasks>
+
+<current_work>
+The project is currently in the Production Ready System development phase. Previously, the AI successfully built out the core -branded homepage, including a Google-like search bar, property type selection, and integrated specific visual elements like background image and styling. A smart map system with heatmap, favorites, and comparison features was implemented.
+
+Recently, several bugs were addressed: a UI cache issue, a duplicate  error in , and a critical Yükleniyor... (Loading) screen issue on the homepage caused by a network timeout in the authentication status check. The AI also enhanced the homepage with 81 il, 963 ilçe veri noktası statistics and enriched the detail page () with demographic data and favorite options.
+
+The last identified issues are persistent login problems, the absence of a functional admin page (only UI was created), and the general lack of real data integration from the  file. The user specifically requested a Production Ready System based on a detailed report from the AI. The AI has just completed the Login Sistemi Düzeltme step, and started creating placeholder pages for the Üye Profil Sistemi ( and ). The immediate next instruction from the user is to continue with Critical Fixes and Missing Pages.
+</current_work>
+
+<optional_next_step>
+The next step is to proceed with Backend API Completion for the critical login and profile functionalities.
+</optional_next_step>

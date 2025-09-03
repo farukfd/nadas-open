@@ -482,9 +482,31 @@ class MLPipeline:
             
             model = joblib.load(model_path)
             
-            # Prepare data
+            # Prepare data for prediction (no target column needed)
             df = pd.DataFrame(data)
-            X, _ = self.model_trainer._prepare_features_target(df, 'price')
+            
+            # Select numeric columns for features (excluding price if present)
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            if 'price' in numeric_cols:
+                numeric_cols.remove('price')
+            
+            # If no numeric columns, create some basic features
+            if not numeric_cols:
+                # Create basic features from available data
+                if 'size_m2' in df.columns:
+                    df['size_m2'] = pd.to_numeric(df['size_m2'], errors='coerce').fillna(100)
+                    numeric_cols.append('size_m2')
+                if 'rooms' in df.columns:
+                    df['rooms'] = pd.to_numeric(df['rooms'], errors='coerce').fillna(2)
+                    numeric_cols.append('rooms')
+                if 'age' in df.columns:
+                    df['age'] = pd.to_numeric(df['age'], errors='coerce').fillna(5)
+                    numeric_cols.append('age')
+                if 'floor' in df.columns:
+                    df['floor'] = pd.to_numeric(df['floor'], errors='coerce').fillna(3)
+                    numeric_cols.append('floor')
+            
+            X = df[numeric_cols].fillna(0)
             
             # Make predictions
             predictions = model.predict(X)
@@ -492,7 +514,8 @@ class MLPipeline:
             return {
                 'success': True,
                 'predictions': predictions.tolist(),
-                'model_id': model_id
+                'model_id': model_id,
+                'features_used': numeric_cols
             }
             
         except Exception as e:

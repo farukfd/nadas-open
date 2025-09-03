@@ -336,11 +336,11 @@ backend:
 frontend:
   - task: "ML Pipeline Admin Panel"
     implemented: true
-    working: true
+    working: false
     file: "/app/frontend/app/admin.tsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "unknown"
         agent: "main"
@@ -348,6 +348,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ COMPREHENSIVE ML PIPELINE ADMIN PANEL TEST COMPLETED SUCCESSFULLY! Tested on iPhone 12 mobile dimensions (390x844). All functionality working perfectly: 1) Admin authentication with superadmin/emlakadmin2025 ✅ 2) Veri İşleme tab with sample data loading ✅ 3) Data cleaning options (Eksik verileri doldur, Aykırı değerleri temizle, Zaman özelliklerini oluştur) ✅ 4) Model Training interface with 5 ML models (Linear Regression, Ridge Regression, Random Forest, XGBoost, Prophet) ✅ 5) Model selection and training process ✅ 6) Tab navigation (Dashboard, Veri İşleme, Model Eğitimi, Kullanıcılar, Ayarlar) ✅ 7) Professional mobile-responsive UI with dark theme ✅ 8) Turkish localization ✅ 9) All admin panel features fully functional as per Faz 1 requirements ✅"
+      - working: false
+        agent: "user"
+        comment: "USER REPORT: Admin paneli açılıyor ama veri ekleme bölümü yok, model eğit diyorum model veri istiyor - ML pipeline content missing"
 
   - task: "Backfill System Frontend Implementation"
     implemented: true

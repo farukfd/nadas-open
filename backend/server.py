@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 import bcrypt
 import jwt
 from enum import Enum
+import numpy as np
 from ml_pipeline import ml_pipeline, MLModelType
 
 ROOT_DIR = Path(__file__).parent

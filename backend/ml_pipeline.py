@@ -186,8 +186,8 @@ class ModelTrainer:
                              for val in model.coef_]
                 feature_importance = dict(zip(X.columns, coef_values))
                 
-            # Save model
-            model_id = self._save_model(model, model_type)
+            # Save model with feature names
+            model_id = self._save_model(model, model_type, X.columns.tolist())
             
             result = {
                 'model_id': model_id,
@@ -196,6 +196,7 @@ class ModelTrainer:
                 'metrics': metrics,
                 'feature_importance': feature_importance,
                 'data_shape': X.shape,
+                'feature_names': X.columns.tolist(),
                 'predictions': {
                     'actual_test': y_test.tolist(),
                     'predicted_test': y_pred_test.tolist()

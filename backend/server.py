@@ -738,6 +738,228 @@ async def get_collections_info_admin(admin_user: Dict = Depends(verify_admin_use
         logger.error(f"Error getting collections info: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error retrieving collections info: {str(e)}")
 
+@api_router.post("/admin/backfill/detect-missing")
+async def detect_missing_periods_admin(
+    request_data: Dict[str, Any],
+    admin_user: Dict = Depends(verify_admin_user)
+):
+    """Eksik dönemleri tespit et (Backfill Sistem)"""
+    try:
+        # Get configuration
+        start_date = request_data.get('start_date', '2016-01-01')
+        end_date = request_data.get('end_date', '2022-12-31')
+        
+        config = BackfillConfig(
+            start_date=start_date,
+            end_date=end_date,
+            current_data_months=request_data.get('current_data_months', 12),
+            confidence_threshold=request_data.get('confidence_threshold', 0.7)
+        )
+        
+        # Run missing period detection
+        from backfill_pipeline import BackfillPipeline
+        pipeline = BackfillPipeline(db)
+        missing_periods = await pipeline.detect_missing_periods(config)
+        
+        # Calculate statistics
+        total_missing = sum(len(periods) for periods in missing_periods.values())
+        
+        return {
+            "success": True,
+            "missing_periods": missing_periods,
+            "statistics": {
+                "locations_with_missing_data": len(missing_periods),
+                "total_missing_periods": total_missing,
+                "date_range": {
+                    "start": start_date,
+                    "end": end_date
+                }
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error detecting missing periods: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Missing period detection error: {str(e)}")
+
+@api_router.post("/admin/backfill/run")
+async def run_backfill_admin(
+    request_data: Dict[str, Any],
+    admin_user: Dict = Depends(verify_admin_user)
+):
+    """Backfill işlemini çalıştır (Geçmiş Veri Doldurma)"""
+    try:
+        # Get configuration
+        config = BackfillConfig(
+            start_date=request_data.get('start_date', '2016-01-01'),
+            end_date=request_data.get('end_date', '2022-12-31'),
+            current_data_months=request_data.get('current_data_months', 12),
+            confidence_threshold=request_data.get('confidence_threshold', 0.7),
+            models_to_use=request_data.get('models_to_use', ['prophet', 'xgboost'])
+        )
+        
+        logger.info(f"Starting backfill process with config: {config}")
+        
+        # Run backfill pipeline
+        result = await run_backfill_pipeline(db, config)
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error running backfill: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Backfill error: {str(e)}")
+
+@api_router.get("/admin/backfill/results")
+async def get_backfill_results_admin(
+    session_id: Optional[str] = None,
+    admin_user: Dict = Depends(verify_admin_user)
+):
+    """Backfill sonuçlarını getir"""
+    try:
+        query = {}
+        if session_id:
+            query['backfill_session'] = session_id
+        
+        # Get predictions
+        predictions = await db.backfill_predictions.find(query).sort("created_at", -1).limit(1000).to_list(1000)
+        
+        # Get metadata
+        metadata = await db.backfill_metadata.find(query).sort("created_at", -1).to_list(100)
+        
+        # Calculate summary statistics
+        if predictions:
+            avg_confidence = sum(p.get('confidence_score', 0) for p in predictions) / len(predictions)
+            locations_count = len(set(p.get('location_code') for p in predictions))
+            models_used = list(set(p.get('model_used') for p in predictions))
+        else:
+            avg_confidence = 0
+            locations_count = 0
+            models_used = []
+        
+        return {
+            "success": True,
+            "predictions": predictions,
+            "metadata": metadata,
+            "summary": {
+                "total_predictions": len(predictions),
+                "locations_processed": locations_count,
+                "average_confidence": avg_confidence,
+                "models_used": models_used,
+                "latest_session": predictions[0].get('backfill_session') if predictions else None
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting backfill results: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving backfill results: {str(e)}")
+
+@api_router.get("/admin/backfill/visualization")
+async def get_backfill_visualization_admin(
+    location_code: str,
+    admin_user: Dict = Depends(verify_admin_user)
+):
+    """Backfill sonuçları için görselleştirme verisi"""
+    try:
+        # Get both historical and predicted data for location
+        historical_query = {'location_code': location_code, 'is_predicted': {'$ne': True}}
+        predicted_query = {'location_code': location_code, 'is_predicted': True}
+        
+        # Get historical data
+        historical_data = await db.price_indices_raw.find(historical_query).sort("date", 1).to_list(1000)
+        
+        # Get predicted data
+        predicted_data = await db.backfill_predictions.find(predicted_query).sort("date", 1).to_list(1000)
+        
+        # Prepare visualization data
+        visualization_data = {
+            "location_code": location_code,
+            "historical_data": [
+                {
+                    "date": item.get('date'),
+                    "price_per_m2": item.get('price_index', item.get('price_per_m2', 0)),
+                    "is_predicted": False,
+                    "confidence": 1.0
+                }
+                for item in historical_data
+            ],
+            "predicted_data": [
+                {
+                    "date": item.get('date'),
+                    "price_per_m2": item.get('price_per_m2', 0),
+                    "is_predicted": True,
+                    "confidence": item.get('confidence_score', 0.5),
+                    "model_used": item.get('model_used', 'unknown')
+                }
+                for item in predicted_data
+            ]
+        }
+        
+        # Generate Plotly chart
+        import plotly.graph_objects as go
+        from plotly.utils import PlotlyJSONEncoder
+        
+        fig = go.Figure()
+        
+        # Add historical data
+        if visualization_data["historical_data"]:
+            historical_dates = [d["date"] for d in visualization_data["historical_data"]]
+            historical_prices = [d["price_per_m2"] for d in visualization_data["historical_data"]]
+            
+            fig.add_trace(go.Scatter(
+                x=historical_dates,
+                y=historical_prices,
+                mode='lines+markers',
+                name='Gerçek Veri',
+                line=dict(color='#2563eb', width=2),
+                marker=dict(size=4)
+            ))
+        
+        # Add predicted data
+        if visualization_data["predicted_data"]:
+            predicted_dates = [d["date"] for d in visualization_data["predicted_data"]]
+            predicted_prices = [d["price_per_m2"] for d in visualization_data["predicted_data"]]
+            confidence_scores = [d["confidence"] for d in visualization_data["predicted_data"]]
+            
+            fig.add_trace(go.Scatter(
+                x=predicted_dates,
+                y=predicted_prices,
+                mode='lines+markers',
+                name='Tahmini Veri',
+                line=dict(color='#dc2626', width=2, dash='dash'),
+                marker=dict(
+                    size=4,
+                    color=confidence_scores,
+                    colorscale='RdYlBu',
+                    showscale=True,
+                    colorbar=dict(title="Güven Skoru")
+                )
+            ))
+        
+        fig.update_layout(
+            title=f'Emlak Fiyat Trendi - {location_code} (Backfill Sonuçları)',
+            xaxis_title='Tarih',
+            yaxis_title='Fiyat (TL/m²)',
+            template='plotly_white',
+            height=500,
+            hovermode='x unified'
+        )
+        
+        chart_json = json.dumps(fig, cls=PlotlyJSONEncoder)
+        
+        return {
+            "success": True,
+            "data": visualization_data,
+            "chart": chart_json,
+            "statistics": {
+                "historical_count": len(visualization_data["historical_data"]),
+                "predicted_count": len(visualization_data["predicted_data"]),
+                "avg_confidence": np.mean([d["confidence"] for d in visualization_data["predicted_data"]]) if visualization_data["predicted_data"] else 0
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating backfill visualization: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Visualization error: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 

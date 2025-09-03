@@ -1015,12 +1015,16 @@ async def get_backfill_visualization(
         logger.error(f"Visualization error: {e}")
         raise HTTPException(status_code=500, detail=f"Visualization generation failed: {str(e)}")
 
+# CSV Upload request model
+class CSVUploadRequest(BaseModel):
+    file_content: str = Field(..., description="Base64 encoded CSV content")
+    file_name: str = Field(..., description="Original filename")
+    data_type: str = Field(..., description="Data type: users, locations, prices")
+
 # CSV Upload endpoint for Admin Panel
 @api_router.post("/admin/data/upload-csv")
 async def upload_csv_data(
-    file_content: str = Field(..., description="Base64 encoded CSV content"),
-    file_name: str = Field(..., description="Original filename"),
-    data_type: str = Field(..., description="Data type: users, locations, prices"),
+    request: CSVUploadRequest,
     admin_user: Dict = Depends(verify_admin_user)
 ):
     """Upload and process CSV data"""

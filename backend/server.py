@@ -16,6 +16,7 @@ from enum import Enum
 import numpy as np
 from ml_pipeline import ml_pipeline, MLModelType
 from sql_data_importer import import_ee2401_data
+from backfill_pipeline import run_backfill_pipeline, BackfillConfig
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')

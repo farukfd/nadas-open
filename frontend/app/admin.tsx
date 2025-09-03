@@ -9,12 +9,15 @@ import {
   TextInput,
   Alert,
   FlatList,
+  ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 
 const EXPO_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
+const { width } = Dimensions.get('window');
 
 interface User {
   id: string;

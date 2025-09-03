@@ -679,6 +679,63 @@ async def get_sample_data_admin(admin_user: Dict = Depends(verify_admin_user)):
         logger.error(f"Error generating sample data: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating sample data: {str(e)}")
 
+@api_router.post("/admin/data/import-real")
+async def import_real_data_admin(admin_user: Dict = Depends(verify_admin_user)):
+    """Import real data from ee2401_db.sql"""
+    try:
+        logger.info("Starting real data import from ee2401_db.sql")
+        
+        # Run the import process
+        stats = await import_ee2401_data()
+        
+        return {
+            "success": True,
+            "message": "Real data import completed",
+            "statistics": {
+                "total_lines": stats.total_lines,
+                "parsed_records": stats.parsed_records,
+                "imported_records": stats.imported_records,
+                "errors": stats.errors,
+                "tables": stats.processed_tables,
+                "success_rate": (stats.imported_records / stats.parsed_records * 100) if stats.parsed_records > 0 else 0
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error importing real data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Import error: {str(e)}")
+
+@api_router.get("/admin/data/collections-info")
+async def get_collections_info_admin(admin_user: Dict = Depends(verify_admin_user)):
+    """Get information about all collections in database"""
+    try:
+        collections_info = {}
+        
+        # Get all collection names
+        collection_names = await db.list_collection_names()
+        
+        for collection_name in collection_names:
+            collection = db[collection_name]
+            count = await collection.count_documents({})
+            
+            # Get sample document
+            sample = await collection.find_one({})
+            
+            collections_info[collection_name] = {
+                "count": count,
+                "sample_fields": list(sample.keys()) if sample else []
+            }
+        
+        return {
+            "success": True,
+            "collections": collections_info,
+            "total_collections": len(collection_names)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting collections info: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving collections info: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 

@@ -563,6 +563,25 @@ export default function AdminPanel() {
           )}
         </TouchableOpacity>
         
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.realDataButton, isLoadingData ? styles.disabledButton : null]}
+          onPress={loadRealData}
+          disabled={isLoadingData}
+        >
+          {isLoadingData ? (
+            <ActivityIndicator color="#ffffff" size="small" />
+          ) : (
+            <Text style={styles.actionButtonText}>🏢 Gerçek Veri Aktar (ee2401_db.sql)</Text>
+          )}
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.systemActionButton]}
+          onPress={getCollectionsInfo}
+        >
+          <Text style={styles.systemActionText}>📊 Veritabanı Durumu</Text>
+        </TouchableOpacity>
+        
         {sampleData.length > 0 && (
           <View style={styles.dataPreview}>
             <Text style={styles.dataPreviewTitle}>

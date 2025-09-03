@@ -1135,6 +1135,20 @@ class BackendTester:
         self.test_location_data_integrity()
         self.test_large_dataset_performance()
         
+        # FAZ 3 Backfill System Tests
+        print("\n" + "=" * 60)
+        print("FAZ 3 - KAPSAMLI BACKFILL SİSTEMİ TESTS")
+        print("=" * 60)
+        
+        self.test_backfill_detect_missing_periods()
+        self.test_backfill_pipeline_execution()
+        self.test_backfill_results_retrieval()
+        self.test_backfill_visualization()
+        self.test_backfill_macro_features()
+        self.test_backfill_confidence_scoring()
+        self.test_backfill_data_quality()
+        self.test_backfill_performance_large_dataset()
+        
         # Summary
         print("\n" + "=" * 60)
         print("TEST SUMMARY")

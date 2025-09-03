@@ -2053,4 +2053,78 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 4,
   },
+  // CSV Upload Styles
+  csvUploadContainer: {
+    backgroundColor: '#334155',
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  csvUploadButton: {
+    backgroundColor: '#0ea5e9',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  csvUploadButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  csvFileInfo: {
+    backgroundColor: '#1e293b',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  csvFileName: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  csvFileSize: {
+    color: '#94a3b8',
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  csvProcessButton: {
+    backgroundColor: '#10b981',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  csvProcessButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  csvResultContainer: {
+    backgroundColor: '#1e293b',
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  csvResultTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  csvResultSuccess: {
+    color: '#10b981',
+  },
+  csvResultError: {
+    color: '#ef4444',
+  },
+  csvResultStats: {
+    gap: 4,
+  },
+  csvResultText: {
+    color: '#e2e8f0',
+    fontSize: 14,
+    marginBottom: 4,
+  },
 });

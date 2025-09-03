@@ -498,6 +498,178 @@ async def get_query_history(current_user: Dict = Depends(get_current_user)):
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
 
+# Admin ML API endpoints
+
+# Admin authentication decorator
+async def verify_admin_user(current_user: Dict = Depends(get_current_user)) -> Dict[str, Any]:
+    """Verify user is admin (for now, check if user is active - in production, add admin role)"""
+    if not current_user.get('is_active', False):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+
+@api_router.get("/admin/stats")
+async def get_admin_stats(admin_user: Dict = Depends(verify_admin_user)):
+    """Get admin dashboard statistics"""
+    try:
+        # Get user statistics
+        total_users = await db.users.count_documents({})
+        active_users = await db.users.count_documents({"is_active": True})
+        
+        # Get query statistics
+        total_locations = await db.locations.count_documents({})
+        total_price_records = await db.price_indices.count_documents({})
+        
+        # Get recent activity (mock data for now)
+        recent_queries = 145  # In production, track this
+        monthly_revenue = 12500  # Mock data
+        
+        return {
+            "total_users": total_users,
+            "active_users": active_users,
+            "total_locations": total_locations,
+            "total_price_records": total_price_records,
+            "recent_queries": recent_queries,
+            "monthly_revenue": monthly_revenue,
+            "system_status": "healthy"
+        }
+    except Exception as e:
+        logger.error(f"Error getting admin stats: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error retrieving statistics")
+
+@api_router.get("/admin/users")
+async def get_admin_users(admin_user: Dict = Depends(verify_admin_user)):
+    """Get all users for admin management"""
+    try:
+        users = await db.users.find({}, {
+            "_id": 0,
+            "password_hash": 0  # Don't return password hash
+        }).to_list(1000)
+        
+        return {"users": users}
+    except Exception as e:
+        logger.error(f"Error getting users: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error retrieving users")
+
+@api_router.post("/admin/data/process")
+async def process_data_admin(
+    request_data: Dict[str, Any],
+    admin_user: Dict = Depends(verify_admin_user)
+):
+    """Process data with ML pipeline for admin"""
+    try:
+        data = request_data.get('data', [])
+        options = request_data.get('options', {})
+        
+        result = await ml_pipeline.process_data(data, options)
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error processing data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Data processing error: {str(e)}")
+
+@api_router.post("/admin/models/train")
+async def train_model_admin(
+    request_data: Dict[str, Any],
+    admin_user: Dict = Depends(verify_admin_user)
+):
+    """Train ML model for admin"""
+    try:
+        data = request_data.get('data', [])
+        model_config = request_data.get('model_config', {})
+        
+        # Validate model type
+        model_type = model_config.get('model_type')
+        valid_models = [
+            MLModelType.LINEAR_REGRESSION,
+            MLModelType.RIDGE_REGRESSION,
+            MLModelType.LASSO_REGRESSION,
+            MLModelType.RANDOM_FOREST,
+            MLModelType.XGBOOST,
+            MLModelType.PROPHET
+        ]
+        
+        if model_type not in valid_models:
+            raise HTTPException(status_code=400, detail=f"Invalid model type. Must be one of: {valid_models}")
+        
+        result = await ml_pipeline.train_model(data, model_config)
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error training model: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Model training error: {str(e)}")
+
+@api_router.get("/admin/models")
+async def get_models_admin(admin_user: Dict = Depends(verify_admin_user)):
+    """Get all trained models for admin"""
+    try:
+        models = await ml_pipeline.get_model_list()
+        return {"models": models}
+        
+    except Exception as e:
+        logger.error(f"Error getting models: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving models: {str(e)}")
+
+@api_router.post("/admin/models/{model_id}/predict")
+async def predict_with_model_admin(
+    model_id: str,
+    request_data: Dict[str, Any],
+    admin_user: Dict = Depends(verify_admin_user)
+):
+    """Make predictions with a trained model"""
+    try:
+        data = request_data.get('data', [])
+        result = await ml_pipeline.predict(model_id, data)
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error making predictions: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
+
+@api_router.get("/admin/data/sample")
+async def get_sample_data_admin(admin_user: Dict = Depends(verify_admin_user)):
+    """Get sample data for ML training (mock data for testing)"""
+    try:
+        # Generate sample real estate data for testing
+        import random
+        from datetime import datetime, timedelta
+        
+        sample_data = []
+        base_date = datetime.now() - timedelta(days=365*5)  # 5 years ago
+        base_price = 5000  # Base price per m2
+        
+        for i in range(100):
+            date = base_date + timedelta(days=i*18)  # Every 18 days
+            # Add some trend and seasonality
+            trend = i * 2  # Upward trend
+            seasonal = 200 * np.sin(2 * np.pi * i / 20)  # Seasonal pattern
+            noise = random.gauss(0, 100)  # Random noise
+            
+            price = base_price + trend + seasonal + noise
+            
+            sample_data.append({
+                'date': date.strftime('%Y-%m-%d'),
+                'price': max(price, 1000),  # Minimum price
+                'location_code': random.choice(['34001', '34002', '06001', '06002']),
+                'property_type': random.choice(['residential_sale', 'residential_rent']),
+                'size_m2': random.randint(70, 200),
+                'rooms': random.choice([1, 2, 3, 4, 5]),
+                'age': random.randint(0, 30),
+                'floor': random.randint(1, 15)
+            })
+        
+        return {
+            "data": sample_data,
+            "total_records": len(sample_data),
+            "date_range": {
+                "start": sample_data[0]['date'],
+                "end": sample_data[-1]['date']
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating sample data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating sample data: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 

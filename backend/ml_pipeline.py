@@ -176,9 +176,15 @@ class ModelTrainer:
             # Feature importance (if available)
             feature_importance = {}
             if hasattr(model, 'feature_importances_'):
-                feature_importance = dict(zip(X.columns, model.feature_importances_))
+                # Ensure feature importance values are JSON serializable
+                importance_values = [float(val) if not (np.isnan(val) or np.isinf(val)) else 0.0 
+                                   for val in model.feature_importances_]
+                feature_importance = dict(zip(X.columns, importance_values))
             elif hasattr(model, 'coef_'):
-                feature_importance = dict(zip(X.columns, model.coef_))
+                # Ensure coefficient values are JSON serializable
+                coef_values = [float(val) if not (np.isnan(val) or np.isinf(val)) else 0.0 
+                             for val in model.coef_]
+                feature_importance = dict(zip(X.columns, coef_values))
                 
             # Save model
             model_id = self._save_model(model, model_type)

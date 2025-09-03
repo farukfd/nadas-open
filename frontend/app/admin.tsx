@@ -1183,12 +1183,13 @@ export default function AdminPanel() {
         {activeTab === 'dashboard' && renderDashboard()}
         {activeTab === 'data' && renderDataProcessing()}
         {activeTab === 'models' && renderModelTraining()}
+        {activeTab === 'backfill' && renderBackfill()}
         {activeTab === 'users' && renderUsers()}
         {activeTab === 'settings' && renderSettings()}
         
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            EmlakEkspertizi.com Admin Panel v2.0 - ML Pipeline
+            EmlakEkspertizi.com Admin Panel v2.1 - ML Pipeline + Backfill
           </Text>
           <Text style={styles.footerSubtext}>
             © 2025 Nadas.com.tr güvencesiyle

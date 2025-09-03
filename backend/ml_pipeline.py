@@ -508,33 +508,68 @@ class MLPipeline:
             if not model_path.exists():
                 raise ValueError(f"Model {model_id} not found")
             
-            model = joblib.load(model_path)
+            model_data = joblib.load(model_path)
             
-            # Prepare data for prediction (no target column needed)
+            # Handle both old and new model formats
+            if isinstance(model_data, dict):
+                model = model_data['model']
+                expected_features = model_data.get('feature_names', [])
+            else:
+                # Old format - just the model
+                model = model_data
+                expected_features = []
+            
+            # Prepare data for prediction
             df = pd.DataFrame(data)
             
-            # Select numeric columns for features (excluding price if present)
-            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-            if 'price' in numeric_cols:
-                numeric_cols.remove('price')
-            
-            # If no numeric columns, create some basic features
-            if not numeric_cols:
-                # Create basic features from available data
-                if 'size_m2' in df.columns:
-                    df['size_m2'] = pd.to_numeric(df['size_m2'], errors='coerce').fillna(100)
-                    numeric_cols.append('size_m2')
-                if 'rooms' in df.columns:
-                    df['rooms'] = pd.to_numeric(df['rooms'], errors='coerce').fillna(2)
-                    numeric_cols.append('rooms')
-                if 'age' in df.columns:
-                    df['age'] = pd.to_numeric(df['age'], errors='coerce').fillna(5)
-                    numeric_cols.append('age')
-                if 'floor' in df.columns:
-                    df['floor'] = pd.to_numeric(df['floor'], errors='coerce').fillna(3)
-                    numeric_cols.append('floor')
-            
-            X = df[numeric_cols].fillna(0)
+            # If we have expected features, try to create them
+            if expected_features:
+                # Create basic features that match training
+                feature_df = pd.DataFrame()
+                
+                for feature in expected_features:
+                    if feature in df.columns:
+                        feature_df[feature] = pd.to_numeric(df[feature], errors='coerce').fillna(0)
+                    else:
+                        # Create missing features with default values
+                        if 'size_m2' in feature:
+                            feature_df[feature] = 100.0
+                        elif 'rooms' in feature:
+                            feature_df[feature] = 3.0
+                        elif 'age' in feature:
+                            feature_df[feature] = 5.0
+                        elif 'floor' in feature:
+                            feature_df[feature] = 3.0
+                        elif 'year' in feature:
+                            feature_df[feature] = 2024.0
+                        elif 'month' in feature:
+                            feature_df[feature] = 6.0
+                        elif 'quarter' in feature:
+                            feature_df[feature] = 2.0
+                        elif 'day_of_year' in feature:
+                            feature_df[feature] = 180.0
+                        elif 'lag' in feature or 'rolling' in feature:
+                            feature_df[feature] = 5000.0  # Default price-like value
+                        else:
+                            feature_df[feature] = 0.0
+                
+                X = feature_df
+            else:
+                # Fallback to basic numeric features
+                numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+                if 'price' in numeric_cols:
+                    numeric_cols.remove('price')
+                
+                if not numeric_cols:
+                    # Create basic features
+                    X = pd.DataFrame({
+                        'size_m2': pd.to_numeric(df.get('size_m2', 100), errors='coerce').fillna(100),
+                        'rooms': pd.to_numeric(df.get('rooms', 3), errors='coerce').fillna(3),
+                        'age': pd.to_numeric(df.get('age', 5), errors='coerce').fillna(5),
+                        'floor': pd.to_numeric(df.get('floor', 3), errors='coerce').fillna(3)
+                    })
+                else:
+                    X = df[numeric_cols].fillna(0)
             
             # Make predictions
             predictions = model.predict(X)
@@ -543,7 +578,7 @@ class MLPipeline:
                 'success': True,
                 'predictions': predictions.tolist(),
                 'model_id': model_id,
-                'features_used': numeric_cols
+                'features_used': list(X.columns)
             }
             
         except Exception as e:

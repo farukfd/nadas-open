@@ -61,11 +61,28 @@ class DataProcessor:
         if options.get('remove_outliers', True):
             df = self._remove_outliers(df, method=options.get('outlier_method', 'iqr'))
         
-        # Feature engineering for time series
+        # Feature engineering for time series (simplified)
         if options.get('create_time_features', True) and 'date' in df.columns:
-            df = self._create_time_features(df)
-            
+            try:
+                df = self._create_time_features_safe(df)
+            except Exception as e:
+                logger.warning(f"Could not create time features: {str(e)}")
+                
         logger.info(f"Data cleaned, {len(df)} rows remaining")
+        return df
+    
+    def _create_time_features_safe(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Create time-based features safely"""
+        if 'date' in df.columns:
+            df['date'] = pd.to_datetime(df['date'], errors='coerce')
+            df = df.dropna(subset=['date'])  # Remove rows with invalid dates
+            
+            df['year'] = df['date'].dt.year
+            df['month'] = df['date'].dt.month
+            df['quarter'] = df['date'].dt.quarter
+            df['day_of_year'] = df['date'].dt.dayofyear
+            
+        # Skip lag and rolling features for simple processing
         return df
     
     def _remove_outliers(self, df: pd.DataFrame, method: str = 'iqr') -> pd.DataFrame:

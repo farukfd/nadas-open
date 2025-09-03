@@ -230,12 +230,12 @@ export default function AdminPanel() {
 
   const loadStats = async () => {
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) return;
+      const adminToken = await AsyncStorage.getItem('admin_token');
+      if (!adminToken) return;
 
       const response = await fetch(`${EXPO_BACKEND_URL}/api/admin/stats`, {
         headers: {
-          'Authorization': `Bearer ${JSON.parse(token)}`,
+          'Authorization': `Bearer ${adminToken}`,
           'Content-Type': 'application/json',
         },
       });

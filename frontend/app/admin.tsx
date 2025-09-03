@@ -75,6 +75,14 @@ export default function AdminPanel() {
     password: ''
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // ML Pipeline States
+  const [sampleData, setSampleData] = useState<any[]>([]);
+  const [selectedModel, setSelectedModel] = useState('linear_regression');
+  const [isTraining, setIsTraining] = useState(false);
+  const [trainingResult, setTrainingResult] = useState<TrainingResult | null>(null);
+  const [models, setModels] = useState<MLModel[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
   useEffect(() => {
     checkAdminAuth();

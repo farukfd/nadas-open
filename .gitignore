@@ -79,3 +79,7 @@ agenthub/agents/youtube/db
 # Mobile development
 android-sdk/ ee2401_db.sql
 ee2401_db.sql
+-e 
+# Environment files
+*.env
+*.env.*

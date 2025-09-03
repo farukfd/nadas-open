@@ -1063,6 +1063,8 @@ export default function AdminPanel() {
       </View>
     </View>
   );
+
+  const renderSettings = () => (
     <View style={styles.tabContent}>
       <Text style={styles.tabTitle}>⚙️ Sistem Ayarları</Text>
       

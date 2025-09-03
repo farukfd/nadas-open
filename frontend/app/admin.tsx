@@ -813,12 +813,14 @@ export default function AdminPanel() {
       {/* Content */}
       <ScrollView style={styles.content}>
         {activeTab === 'dashboard' && renderDashboard()}
+        {activeTab === 'data' && renderDataProcessing()}
+        {activeTab === 'models' && renderModelTraining()}
         {activeTab === 'users' && renderUsers()}
         {activeTab === 'settings' && renderSettings()}
         
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            EmlakEkspertizi.com Admin Panel v1.0
+            EmlakEkspertizi.com Admin Panel v2.0 - ML Pipeline
           </Text>
           <Text style={styles.footerSubtext}>
             © 2025 Nadas.com.tr güvencesiyle

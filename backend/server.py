@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -15,7 +15,6 @@ import bcrypt
 import jwt
 from enum import Enum
 import numpy as np
-import json
 from ml_pipeline import ml_pipeline, MLModelType
 from sql_data_importer import import_ee2401_data
 from backfill_pipeline import run_backfill_pipeline, BackfillConfig

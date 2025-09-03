@@ -564,6 +564,24 @@ export default function AdminPanel() {
         </TouchableOpacity>
         
         <TouchableOpacity
+          style={[styles.tab, activeTab === 'data' && styles.activeTab]}
+          onPress={() => setActiveTab('data')}
+        >
+          <Text style={[styles.tabText, activeTab === 'data' && styles.activeTabText]}>
+            📊 Veri İşleme
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'models' && styles.activeTab]}
+          onPress={() => setActiveTab('models')}
+        >
+          <Text style={[styles.tabText, activeTab === 'models' && styles.activeTabText]}>
+            🤖 Model Eğitimi
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'users' && styles.activeTab]}
           onPress={() => setActiveTab('users')}
         >

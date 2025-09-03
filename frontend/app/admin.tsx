@@ -983,6 +983,15 @@ export default function AdminPanel() {
         </TouchableOpacity>
         
         <TouchableOpacity
+          style={[styles.tab, activeTab === 'backfill' && styles.activeTab]}
+          onPress={() => setActiveTab('backfill')}
+        >
+          <Text style={[styles.tabText, activeTab === 'backfill' && styles.activeTabText]}>
+            ⏰ Backfill
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'users' && styles.activeTab]}
           onPress={() => setActiveTab('users')}
         >

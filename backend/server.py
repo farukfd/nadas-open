@@ -503,12 +503,54 @@ async def health_check():
 
 # Admin ML API endpoints
 
+# Admin authentication models
+class AdminLoginRequest(BaseModel):
+    username: str
+    password: str
+
+# Admin login endpoint
+@api_router.post("/admin/login")
+async def admin_login(admin_data: AdminLoginRequest):
+    """Admin login endpoint"""
+    # Simple hardcoded admin credentials (in production, use proper admin user management)
+    ADMIN_USERNAME = "superadmin"
+    ADMIN_PASSWORD = "emlakadmin2025"
+    
+    if admin_data.username != ADMIN_USERNAME or admin_data.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid admin credentials")
+    
+    # Create admin token
+    token_data = {
+        "sub": admin_data.username,
+        "type": "admin",
+        "is_admin": True,
+        "exp": datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
+    }
+    
+    token = jwt.encode(token_data, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    
+    return {
+        "token": token,
+        "admin": {
+            "username": admin_data.username,
+            "type": "admin",
+            "is_admin": True
+        }
+    }
+
 # Admin authentication decorator
-async def verify_admin_user(current_user: Dict = Depends(get_current_user)) -> Dict[str, Any]:
-    """Verify user is admin (for now, check if user is active - in production, add admin role)"""
-    if not current_user.get('is_active', False):
-        raise HTTPException(status_code=403, detail="Admin access required")
-    return current_user
+async def verify_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
+    """Verify user is admin"""
+    try:
+        token = credentials.credentials
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        
+        if not payload.get('is_admin', False):
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        return payload
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid admin token")
 
 @api_router.get("/admin/stats")
 async def get_admin_stats(admin_user: Dict = Depends(verify_admin_user)):

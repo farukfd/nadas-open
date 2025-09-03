@@ -785,6 +785,18 @@ class BackendTester:
         self.test_ml_predictions()
         self.test_ml_error_handling()
         
+        # FAZ 2.1 Real Data Import & ML Pipeline Tests
+        print("\n" + "=" * 50)
+        print("FAZ 2.1 - REAL DATA IMPORT & ML PIPELINE TESTS")
+        print("=" * 50)
+        
+        self.test_real_data_import()
+        self.test_collections_info()
+        self.test_real_data_ml_training()
+        self.test_phone_hash_functionality()
+        self.test_location_data_integrity()
+        self.test_large_dataset_performance()
+        
         # Summary
         print("\n" + "=" * 60)
         print("TEST SUMMARY")

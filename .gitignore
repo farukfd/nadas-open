@@ -101,3 +101,7 @@ ee2401_db.zip
 
 # ML Models (generated at runtime)
 backend/models/*.pkl
+-e 
+# Environment files
+*.env
+*.env.*

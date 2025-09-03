@@ -16,7 +16,7 @@ import pandas as pd
 # Load environment
 load_dotenv('backend/.env')
 
-BACKEND_URL = "https://realty-analytics-3.preview.emergentagent.com/api"
+BACKEND_URL = "https://realty-analysis-1.preview.emergentagent.com/api"
 
 class BackfillSystemTester:
     def __init__(self):

@@ -547,6 +547,20 @@ class BackendTester:
         self.test_query_limits()
         self.test_authentication_errors()
         
+        # ML Pipeline Admin API tests
+        print("\n" + "=" * 40)
+        print("ML PIPELINE ADMIN API TESTS")
+        print("=" * 40)
+        
+        self.test_admin_stats()
+        self.test_admin_users()
+        self.test_sample_data_generation()
+        self.test_data_processing()
+        self.test_ml_model_training()
+        self.test_ml_model_listing()
+        self.test_ml_predictions()
+        self.test_ml_error_handling()
+        
         # Summary
         print("\n" + "=" * 60)
         print("TEST SUMMARY")

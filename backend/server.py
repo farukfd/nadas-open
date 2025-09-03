@@ -23,6 +23,32 @@ from backfill_pipeline import run_backfill_pipeline, BackfillConfig
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# Free SMS Service Functions
+async def send_free_sms(phone: str, message: str) -> bool:
+    """
+    Free SMS service integration
+    Uses TextBelt free SMS API (1 SMS per day free)
+    Replace with your preferred SMS service
+    """
+    try:
+        # TextBelt free SMS service
+        response = requests.post('https://textbelt.com/text', {
+            'phone': phone,
+            'message': message,
+            'key': 'textbelt'  # Free tier: 1 SMS per day
+        })
+        
+        result = response.json()
+        if result.get('success'):
+            return True
+        else:
+            logger.warning(f"SMS sending failed: {result.get('error', 'Unknown error')}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"SMS service error: {e}")
+        return False
+
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)

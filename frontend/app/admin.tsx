@@ -265,7 +265,55 @@ export default function AdminPanel() {
     }
   };
 
-  const trainModel = async () => {
+  const loadRealData = async () => {
+    setIsLoadingData(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return;
+
+      const response = await fetch(`${EXPO_BACKEND_URL}/api/admin/data/import-real`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${JSON.parse(token)}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        Alert.alert('Başarılı!', `Gerçek veri aktarımı tamamlandı!\n\n📊 ${result.statistics.imported_records.toLocaleString('tr-TR')} kayıt aktarıldı\n✅ Başarı oranı: %${result.statistics.success_rate.toFixed(1)}`);
+      } else {
+        Alert.alert('Hata', 'Gerçek veri aktarımında hata oluştu');
+      }
+    } catch (error) {
+      console.error('Error importing real data:', error);
+      Alert.alert('Hata', 'Bağlantı hatası');
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  const getCollectionsInfo = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return;
+
+      const response = await fetch(`${EXPO_BACKEND_URL}/api/admin/data/collections-info`, {
+        headers: {
+          'Authorization': `Bearer ${JSON.parse(token)}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        Alert.alert('Veritabanı Durumu', `📊 Toplam ${data.total_collections} koleksiyon:\n\n${Object.entries(data.collections).map(([name, info]) => `• ${name}: ${info.count.toLocaleString('tr-TR')} kayıt`).join('\n')}`);
+      }
+    } catch (error) {
+      console.error('Error getting collections info:', error);
+      Alert.alert('Hata', 'Koleksiyon bilgileri alınamadı');
+    }
+  };
     if (sampleData.length === 0) {
       Alert.alert('Uyarı', 'Önce veri yükleyin!');
       return;

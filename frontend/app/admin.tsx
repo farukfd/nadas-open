@@ -125,17 +125,42 @@ export default function AdminPanel() {
   };
 
   const handleAdminLogin = async () => {
-    // Simple admin authentication - in production, this should be more secure
-    if (adminCredentials.username === 'superadmin' && adminCredentials.password === 'emlakadmin2025') {
-      await AsyncStorage.setItem('admin_auth', JSON.stringify({
-        username: adminCredentials.username,
-        loginTime: new Date().toISOString()
-      }));
-      setIsAuthenticated(true);
-      loadAdminData();
-      Alert.alert('Başarılı', 'Admin paneline giriş yapıldı!');
-    } else {
-      Alert.alert('Hata', 'Geçersiz admin bilgileri!');
+    if (!adminCredentials.username || !adminCredentials.password) {
+      Alert.alert('Hata', 'Lütfen tüm alanları doldurun!');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${EXPO_BACKEND_URL}/api/admin/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: adminCredentials.username,
+          password: adminCredentials.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Save admin token from backend response
+        await AsyncStorage.setItem('admin_token', data.token);
+        await AsyncStorage.setItem('admin_auth', JSON.stringify({
+          username: adminCredentials.username,
+          loginTime: new Date().toISOString(),
+          isAdmin: true
+        }));
+        setIsAuthenticated(true);
+        loadAdminData();
+        Alert.alert('Başarılı', 'Admin paneline giriş yapıldı!');
+      } else {
+        Alert.alert('Hata', data.detail || 'Geçersiz admin bilgileri!');
+      }
+    } catch (error) {
+      console.error('Admin login error:', error);
+      Alert.alert('Hata', 'Bağlantı hatası oluştu.');
     }
   };
 

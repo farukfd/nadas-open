@@ -402,11 +402,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Real Data Import API"
-    - "Collections Info API" 
-    - "Real Data ML Pipeline"
-    - "KVKV Phone Hash Compliance"
-    - "Large Dataset Performance"
+    - "Backfill System - Missing Period Detection"
+    - "Backfill System - ML Pipeline Execution"
+    - "Backfill System - Results & Visualization"
+    - "Backfill System - Advanced Features"
+    - "Backfill System - KVKV Compliance & Performance"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"

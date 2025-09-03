@@ -50,12 +50,21 @@ interface MLModel {
   data_shape: [number, number];
 }
 
-interface TrainingResult {
+interface BackfillConfig {
+  start_date: string;
+  end_date: string;
+  current_data_months: number;
+  confidence_threshold: number;
+  models_to_use: string[];
+}
+
+interface BackfillResult {
   success: boolean;
-  model_id?: string;
-  model_type?: string;
-  training_time?: number;
-  metrics?: any;
+  backfilled_locations: number;
+  total_predictions: number;
+  avg_confidence: number;
+  models_used: string[];
+  session_id: string;
   error?: string;
 }
 

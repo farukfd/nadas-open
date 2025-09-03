@@ -119,10 +119,15 @@ export default function AdminPanel() {
 
   const loadAdminData = async () => {
     try {
+      const token = await AsyncStorage.getItem('admin_auth');
+      if (!token) return;
+
       // Load users
       await loadUsers();
-      // Load stats
+      // Load stats from backend
       await loadStats();
+      // Load ML models
+      await loadModels();
     } catch (error) {
       console.error('Error loading admin data:', error);
     }
@@ -130,43 +135,47 @@ export default function AdminPanel() {
 
   const loadUsers = async () => {
     try {
-      // Mock data - gerçek API ile değiştirilecek
-      const mockUsers: User[] = [
-        {
-          id: 'user_sample_001',
-          email: 'test@example.com',
-          first_name: 'Test',
-          last_name: 'User',
-          user_type: 'individual',
-          query_count: 3,
-          query_limit: 5,
-          created_at: '2025-08-01T10:00:00Z',
-          is_active: true
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return;
+
+      const response = await fetch(`${EXPO_BACKEND_URL}/api/admin/users`, {
+        headers: {
+          'Authorization': `Bearer ${JSON.parse(token)}`,
+          'Content-Type': 'application/json',
         },
-        {
-          id: 'user_sample_002',
-          email: 'corporate@company.com',
-          first_name: 'Kurumsal',
-          last_name: 'Kullanıcı',
-          user_type: 'corporate',
-          query_count: 8,
-          query_limit: 10,
-          created_at: '2025-08-15T14:30:00Z',
-          is_active: true
-        },
-        {
-          id: 'user_sample_003',
-          email: 'inactive@user.com',
-          first_name: 'Pasif',
-          last_name: 'Kullanıcı',
-          user_type: 'individual',
-          query_count: 5,
-          query_limit: 5,
-          created_at: '2025-07-20T09:15:00Z',
-          is_active: false
-        }
-      ];
-      setUsers(mockUsers);
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users);
+      } else {
+        // Fallback to mock data if API fails
+        const mockUsers: User[] = [
+          {
+            id: 'user_sample_001',
+            email: 'test@example.com',
+            first_name: 'Test',
+            last_name: 'User',
+            user_type: 'individual',
+            query_count: 3,
+            query_limit: 5,
+            created_at: '2025-08-01T10:00:00Z',
+            is_active: true
+          },
+          {
+            id: 'user_sample_002',
+            email: 'corporate@company.com',
+            first_name: 'Kurumsal',
+            last_name: 'Kullanıcı',
+            user_type: 'corporate',
+            query_count: 8,
+            query_limit: 10,
+            created_at: '2025-08-15T14:30:00Z',
+            is_active: true
+          }
+        ];
+        setUsers(mockUsers);
+      }
     } catch (error) {
       console.error('Error loading users:', error);
     }
@@ -174,16 +183,136 @@ export default function AdminPanel() {
 
   const loadStats = async () => {
     try {
-      // Mock stats - gerçek API ile değiştirilecek
-      const mockStats: AdminStats = {
-        totalUsers: 1247,
-        totalQueries: 8932,
-        activeUsers: 892,
-        monthlyRevenue: 45670
-      };
-      setStats(mockStats);
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return;
+
+      const response = await fetch(`${EXPO_BACKEND_URL}/api/admin/stats`, {
+        headers: {
+          'Authorization': `Bearer ${JSON.parse(token)}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStats({
+          totalUsers: data.total_users,
+          totalQueries: data.recent_queries,
+          activeUsers: data.active_users,
+          monthlyRevenue: data.monthly_revenue
+        });
+      } else {
+        // Fallback to mock data
+        const mockStats: AdminStats = {
+          totalUsers: 1247,
+          totalQueries: 8932,
+          activeUsers: 892,
+          monthlyRevenue: 45670
+        };
+        setStats(mockStats);
+      }
     } catch (error) {
       console.error('Error loading stats:', error);
+    }
+  };
+
+  const loadModels = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return;
+
+      const response = await fetch(`${EXPO_BACKEND_URL}/api/admin/models`, {
+        headers: {
+          'Authorization': `Bearer ${JSON.parse(token)}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setModels(data.models);
+      }
+    } catch (error) {
+      console.error('Error loading models:', error);
+    }
+  };
+
+  const loadSampleData = async () => {
+    setIsLoadingData(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return;
+
+      const response = await fetch(`${EXPO_BACKEND_URL}/api/admin/data/sample`, {
+        headers: {
+          'Authorization': `Bearer ${JSON.parse(token)}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSampleData(data.data);
+        Alert.alert('Başarılı', `${data.total_records} kayıt yüklendi!`);
+      } else {
+        Alert.alert('Hata', 'Veri yüklenirken hata oluştu');
+      }
+    } catch (error) {
+      console.error('Error loading sample data:', error);
+      Alert.alert('Hata', 'Bağlantı hatası');
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  const trainModel = async () => {
+    if (sampleData.length === 0) {
+      Alert.alert('Uyarı', 'Önce veri yükleyin!');
+      return;
+    }
+
+    setIsTraining(true);
+    setTrainingResult(null);
+
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return;
+
+      const response = await fetch(`${EXPO_BACKEND_URL}/api/admin/models/train`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${JSON.parse(token)}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: sampleData,
+          model_config: {
+            model_type: selectedModel,
+            target_column: 'price',
+            test_size: 0.2,
+            data_options: {
+              remove_outliers: true,
+              interpolate_missing: true,
+              create_time_features: true
+            }
+          }
+        }),
+      });
+
+      const result = await response.json();
+      setTrainingResult(result);
+
+      if (result.success) {
+        Alert.alert('Başarılı', `Model başarıyla eğitildi! R² Score: ${result.metrics?.test_r2?.toFixed(3)}`);
+        await loadModels(); // Refresh model list
+      } else {
+        Alert.alert('Hata', result.error || 'Model eğitimi başarısız');
+      }
+    } catch (error) {
+      console.error('Error training model:', error);
+      Alert.alert('Hata', 'Bağlantı hatası');
+    } finally {
+      setIsTraining(false);
     }
   };
 

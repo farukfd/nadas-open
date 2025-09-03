@@ -441,8 +441,14 @@ async def send_verification_code(
         upsert=True
     )
     
-    # In production, send SMS here
-    logger.info(f"Verification code for {phone}: {verification_code}")
+    # Free SMS service integration (Mock - replace with real service)
+    try:
+        await send_free_sms(phone, f"EmlakEkspertizi doğrulama kodunuz: {verification_code}")
+        logger.info(f"SMS sent to {phone} with code: {verification_code}")
+    except Exception as sms_error:
+        logger.error(f"SMS sending failed: {sms_error}")
+        # Still show success to user, code is stored for manual entry
+        logger.info(f"Verification code for {phone}: {verification_code}")
     
     return {"message": "Doğrulama kodu gönderildi", "phone": phone}
 

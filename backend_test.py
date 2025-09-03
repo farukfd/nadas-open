@@ -528,6 +528,230 @@ class BackendTester:
         else:
             self.log_test("Data Processing", False, f"Status: {status_code}, Data: {data}")
     
+    def test_real_data_import(self):
+        """Test real data import from ee2401_db.sql (FAZ 2.1)"""
+        if not self.auth_token:
+            self.log_test("Real Data Import", False, "No auth token available")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        print("\n🔄 Starting real data import (this may take several minutes)...")
+        success, data, status_code = self.make_request("POST", "/admin/data/import-real", {}, headers)
+        
+        if success and status_code == 200:
+            if data.get("success"):
+                stats = data.get("statistics", {})
+                total_lines = stats.get("total_lines", 0)
+                imported_records = stats.get("imported_records", 0)
+                success_rate = stats.get("success_rate", 0)
+                
+                # Check if we got expected volume (~1.7M records)
+                if imported_records > 1000000:  # At least 1M records
+                    self.log_test("Real Data Import", True, f"Imported {imported_records:,} records from {total_lines:,} lines. Success rate: {success_rate:.1f}%")
+                else:
+                    self.log_test("Real Data Import", False, f"Low import volume: {imported_records:,} records (expected >1M)")
+            else:
+                self.log_test("Real Data Import", False, f"Import failed: {data.get('error', 'Unknown error')}")
+        else:
+            self.log_test("Real Data Import", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_collections_info(self):
+        """Test collections info API after real data import (FAZ 2.1)"""
+        if not self.auth_token:
+            self.log_test("Collections Info", False, "No auth token available")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        success, data, status_code = self.make_request("GET", "/admin/data/collections-info", headers=headers)
+        
+        if success and status_code == 200:
+            if data.get("success"):
+                collections = data.get("collections", {})
+                
+                # Check expected collections and counts
+                expected_collections = {
+                    'real_estate_ads': 20,  # Minimum expected
+                    'original_users': 10000,  # Minimum expected  
+                    'price_indices_raw': 1000000  # Minimum expected
+                }
+                
+                results = []
+                all_good = True
+                
+                for collection, min_count in expected_collections.items():
+                    if collection in collections:
+                        actual_count = collections[collection].get('count', 0)
+                        if actual_count >= min_count:
+                            results.append(f"{collection}: {actual_count:,} records ✅")
+                        else:
+                            results.append(f"{collection}: {actual_count:,} records (expected >{min_count:,}) ❌")
+                            all_good = False
+                    else:
+                        results.append(f"{collection}: Not found ❌")
+                        all_good = False
+                
+                if all_good:
+                    self.log_test("Collections Info", True, f"All collections verified. {'; '.join(results)}")
+                else:
+                    self.log_test("Collections Info", False, f"Collection issues found. {'; '.join(results)}")
+            else:
+                self.log_test("Collections Info", False, f"Failed to get collections info: {data.get('error', 'Unknown error')}")
+        else:
+            self.log_test("Collections Info", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_real_data_ml_training(self):
+        """Test ML training with real price indices data (FAZ 2.1)"""
+        if not self.auth_token:
+            self.log_test("Real Data ML Training", False, "No auth token available")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        # First, generate real estate dataset from price indices
+        print("\n🔄 Generating real estate dataset from price indices...")
+        
+        # Create a request for real data sample (focusing on Istanbul)
+        real_data_request = {
+            "location_filter": "Istanbul",
+            "sample_size": 1000,
+            "include_time_features": True
+        }
+        
+        # For now, use the existing sample data endpoint but we'll enhance it
+        success, sample_response, status_code = self.make_request("GET", "/admin/data/sample", headers=headers)
+        
+        if not success or status_code != 200:
+            self.log_test("Real Data ML Training", False, "Could not get real data sample for training")
+            return
+        
+        sample_data = sample_response.get("data", [])
+        if not sample_data:
+            self.log_test("Real Data ML Training", False, "No real data available for ML training")
+            return
+        
+        # Train Linear Regression model with real data
+        training_request = {
+            "data": sample_data,
+            "model_config": {
+                "model_type": "linear_regression",
+                "target_column": "price",
+                "test_size": 0.2,
+                "data_options": {
+                    "remove_outliers": True,
+                    "create_time_features": True,
+                    "location_encoding": True
+                }
+            }
+        }
+        
+        print("🤖 Training Linear Regression model with real data...")
+        success, data, status_code = self.make_request("POST", "/admin/models/train", training_request, headers)
+        
+        if success and status_code == 200:
+            if data.get("success"):
+                model_id = data.get("model_id")
+                metrics = data.get("metrics", {})
+                r2_score = metrics.get("test_r2", 0)
+                rmse = metrics.get("test_rmse", 0)
+                mae = metrics.get("test_mae", 0)
+                
+                # Check if model performance is reasonable with real data
+                if r2_score > 0.3:  # Reasonable R² for real estate data
+                    self.log_test("Real Data ML Training", True, f"Model ID: {model_id}, R²: {r2_score:.3f}, RMSE: {rmse:.0f}, MAE: {mae:.0f}")
+                    
+                    # Store model_id for further testing
+                    self.real_data_model_id = model_id
+                else:
+                    self.log_test("Real Data ML Training", False, f"Poor model performance: R²={r2_score:.3f} (expected >0.3)")
+            else:
+                self.log_test("Real Data ML Training", False, f"Training failed: {data.get('error', 'Unknown error')}")
+        else:
+            self.log_test("Real Data ML Training", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_phone_hash_functionality(self):
+        """Test phone hash functionality for KVKV compliance (FAZ 2.1)"""
+        if not self.auth_token:
+            self.log_test("Phone Hash KVKV", False, "No auth token available")
+            return
+        
+        # This test checks if phone hashing is working in the imported data
+        # We'll verify this by checking the collections info for original_users
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        success, data, status_code = self.make_request("GET", "/admin/data/collections-info", headers=headers)
+        
+        if success and status_code == 200:
+            collections = data.get("collections", {})
+            
+            if 'original_users' in collections:
+                user_count = collections['original_users'].get('count', 0)
+                sample_fields = collections['original_users'].get('sample_fields', [])
+                
+                # Check if phone_hash field exists (indicates KVKV compliance)
+                if 'phone_hash' in sample_fields and user_count > 0:
+                    self.log_test("Phone Hash KVKV", True, f"Phone hashing implemented for {user_count:,} users. KVKV compliant.")
+                else:
+                    self.log_test("Phone Hash KVKV", False, f"Phone hashing not found in user data structure")
+            else:
+                self.log_test("Phone Hash KVKV", False, "original_users collection not found")
+        else:
+            self.log_test("Phone Hash KVKV", False, f"Could not verify phone hashing. Status: {status_code}")
+    
+    def test_location_data_integrity(self):
+        """Test location and temporal data integrity (FAZ 2.1)"""
+        if not self.auth_token:
+            self.log_test("Location Data Integrity", False, "No auth token available")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        # Test if we can still query locations after real data import
+        success, data, status_code = self.make_request("GET", "/locations/cities", headers=headers)
+        
+        if success and status_code == 200:
+            cities = data.get("cities", [])
+            
+            # Check if we have major Turkish cities
+            major_cities = ["İstanbul", "Ankara", "İzmir"]
+            found_cities = [city for city in major_cities if city in cities]
+            
+            if len(found_cities) >= 2:  # At least 2 major cities
+                self.log_test("Location Data Integrity", True, f"Location hierarchy intact. Found cities: {', '.join(found_cities)}")
+            else:
+                self.log_test("Location Data Integrity", False, f"Location data integrity issues. Found cities: {cities}")
+        else:
+            self.log_test("Location Data Integrity", False, f"Could not verify location data. Status: {status_code}")
+    
+    def test_large_dataset_performance(self):
+        """Test system performance with large dataset (FAZ 2.1)"""
+        if not self.auth_token:
+            self.log_test("Large Dataset Performance", False, "No auth token available")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        # Test admin stats endpoint performance with large dataset
+        import time
+        start_time = time.time()
+        
+        success, data, status_code = self.make_request("GET", "/admin/stats", headers=headers)
+        
+        end_time = time.time()
+        response_time = end_time - start_time
+        
+        if success and status_code == 200:
+            total_records = data.get("total_price_records", 0)
+            
+            # Check if system handles 1M+ records efficiently (response < 5 seconds)
+            if total_records > 1000000 and response_time < 5.0:
+                self.log_test("Large Dataset Performance", True, f"Handles {total_records:,} records efficiently ({response_time:.2f}s response)")
+            elif total_records > 1000000:
+                self.log_test("Large Dataset Performance", False, f"Slow performance with {total_records:,} records ({response_time:.2f}s response)")
+            else:
+                self.log_test("Large Dataset Performance", False, f"Dataset too small: {total_records:,} records")
+        else:
+            self.log_test("Large Dataset Performance", False, f"Performance test failed. Status: {status_code}")
+    
     def run_all_tests(self):
         """Run all backend tests"""
         print("=" * 60)

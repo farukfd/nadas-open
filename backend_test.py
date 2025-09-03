@@ -287,6 +287,247 @@ class BackendTester:
         else:
             self.log_test("Missing Token Handling", False, f"Expected 401/403, got {status_code}")
     
+    def test_admin_stats(self):
+        """Test admin dashboard statistics endpoint"""
+        if not self.auth_token:
+            self.log_test("Admin Stats", False, "No auth token available")
+            return
+            
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        success, data, status_code = self.make_request("GET", "/admin/stats", headers=headers)
+        
+        if success and status_code == 200:
+            required_fields = ['total_users', 'active_users', 'total_locations', 'total_price_records']
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if not missing_fields:
+                self.log_test("Admin Stats", True, f"Users: {data.get('total_users')}, Locations: {data.get('total_locations')}, Records: {data.get('total_price_records')}")
+            else:
+                self.log_test("Admin Stats", False, f"Missing fields: {missing_fields}")
+        else:
+            self.log_test("Admin Stats", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_admin_users(self):
+        """Test admin users management endpoint"""
+        if not self.auth_token:
+            self.log_test("Admin Users", False, "No auth token available")
+            return
+            
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        success, data, status_code = self.make_request("GET", "/admin/users", headers=headers)
+        
+        if success and status_code == 200 and "users" in data:
+            users = data["users"]
+            self.log_test("Admin Users", True, f"Retrieved {len(users)} users")
+        else:
+            self.log_test("Admin Users", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_sample_data_generation(self):
+        """Test sample data generation for ML training"""
+        if not self.auth_token:
+            self.log_test("Sample Data Generation", False, "No auth token available")
+            return
+            
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        success, data, status_code = self.make_request("GET", "/admin/data/sample", headers=headers)
+        
+        if success and status_code == 200:
+            sample_data = data.get("data", [])
+            total_records = data.get("total_records", 0)
+            
+            if sample_data and total_records > 0:
+                # Check if sample data has required fields
+                first_record = sample_data[0]
+                required_fields = ['date', 'price', 'location_code', 'property_type']
+                missing_fields = [field for field in required_fields if field not in first_record]
+                
+                if not missing_fields:
+                    self.log_test("Sample Data Generation", True, f"Generated {total_records} records with trends and seasonality")
+                else:
+                    self.log_test("Sample Data Generation", False, f"Missing required fields: {missing_fields}")
+            else:
+                self.log_test("Sample Data Generation", False, "No sample data generated")
+        else:
+            self.log_test("Sample Data Generation", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_ml_model_training(self):
+        """Test ML model training with Linear Regression"""
+        if not self.auth_token:
+            self.log_test("ML Model Training", False, "No auth token available")
+            return
+        
+        # First get sample data
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        success, sample_response, status_code = self.make_request("GET", "/admin/data/sample", headers=headers)
+        
+        if not success or status_code != 200:
+            self.log_test("ML Model Training", False, "Could not get sample data for training")
+            return
+        
+        sample_data = sample_response.get("data", [])
+        if not sample_data:
+            self.log_test("ML Model Training", False, "No sample data available for training")
+            return
+        
+        # Train Linear Regression model
+        training_request = {
+            "data": sample_data,
+            "model_config": {
+                "model_type": "linear_regression",
+                "target_column": "price",
+                "test_size": 0.2,
+                "data_options": {
+                    "remove_outliers": True,
+                    "create_time_features": True
+                }
+            }
+        }
+        
+        success, data, status_code = self.make_request("POST", "/admin/models/train", training_request, headers)
+        
+        if success and status_code == 200:
+            if data.get("success"):
+                model_id = data.get("model_id")
+                metrics = data.get("metrics", {})
+                r2_score = metrics.get("test_r2", 0)
+                
+                self.log_test("ML Model Training", True, f"Model ID: {model_id}, R² Score: {r2_score:.3f}")
+                
+                # Store model_id for prediction test
+                self.trained_model_id = model_id
+            else:
+                self.log_test("ML Model Training", False, f"Training failed: {data.get('error', 'Unknown error')}")
+        else:
+            self.log_test("ML Model Training", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_ml_model_listing(self):
+        """Test ML model listing endpoint"""
+        if not self.auth_token:
+            self.log_test("ML Model Listing", False, "No auth token available")
+            return
+            
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        success, data, status_code = self.make_request("GET", "/admin/models", headers=headers)
+        
+        if success and status_code == 200:
+            models = data.get("models", [])
+            self.log_test("ML Model Listing", True, f"Found {len(models)} trained models")
+        else:
+            self.log_test("ML Model Listing", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_ml_predictions(self):
+        """Test ML model predictions"""
+        if not self.auth_token:
+            self.log_test("ML Predictions", False, "No auth token available")
+            return
+        
+        # Check if we have a trained model from previous test
+        if not hasattr(self, 'trained_model_id'):
+            self.log_test("ML Predictions", False, "No trained model available for predictions")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        # Create prediction data (similar to training data structure)
+        prediction_data = [
+            {
+                'date': '2025-01-01',
+                'location_code': '34001',
+                'property_type': 'residential_sale',
+                'size_m2': 100,
+                'rooms': 3,
+                'age': 5,
+                'floor': 3
+            },
+            {
+                'date': '2025-01-01',
+                'location_code': '34002',
+                'property_type': 'residential_rent',
+                'size_m2': 80,
+                'rooms': 2,
+                'age': 10,
+                'floor': 5
+            }
+        ]
+        
+        prediction_request = {
+            "data": prediction_data
+        }
+        
+        success, data, status_code = self.make_request(
+            "POST", 
+            f"/admin/models/{self.trained_model_id}/predict", 
+            prediction_request, 
+            headers
+        )
+        
+        if success and status_code == 200:
+            if data.get("success"):
+                predictions = data.get("predictions", [])
+                self.log_test("ML Predictions", True, f"Generated {len(predictions)} predictions")
+            else:
+                self.log_test("ML Predictions", False, f"Prediction failed: {data.get('error', 'Unknown error')}")
+        else:
+            self.log_test("ML Predictions", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_ml_error_handling(self):
+        """Test ML pipeline error handling"""
+        if not self.auth_token:
+            self.log_test("ML Error Handling", False, "No auth token available")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        # Test invalid model type
+        invalid_training_request = {
+            "data": [{"price": 1000, "size": 100}],
+            "model_config": {
+                "model_type": "invalid_model_type",
+                "target_column": "price"
+            }
+        }
+        
+        success, data, status_code = self.make_request("POST", "/admin/models/train", invalid_training_request, headers)
+        
+        if status_code == 400:
+            self.log_test("ML Error Handling", True, "Properly rejected invalid model type")
+        else:
+            self.log_test("ML Error Handling", False, f"Expected 400 for invalid model type, got {status_code}")
+    
+    def test_data_processing(self):
+        """Test data processing endpoint"""
+        if not self.auth_token:
+            self.log_test("Data Processing", False, "No auth token available")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        
+        # Test data processing with sample data
+        processing_request = {
+            "data": [
+                {"date": "2024-01-01", "price": 5000, "location": "Istanbul"},
+                {"date": "2024-02-01", "price": 5200, "location": "Istanbul"},
+                {"date": "2024-03-01", "price": 5100, "location": "Istanbul"}
+            ],
+            "options": {
+                "remove_outliers": True,
+                "create_time_features": True,
+                "interpolate_missing": True
+            }
+        }
+        
+        success, data, status_code = self.make_request("POST", "/admin/data/process", processing_request, headers)
+        
+        if success and status_code == 200:
+            if data.get("success"):
+                processed_rows = data.get("processed_rows", 0)
+                original_rows = data.get("original_rows", 0)
+                self.log_test("Data Processing", True, f"Processed {processed_rows}/{original_rows} rows")
+            else:
+                self.log_test("Data Processing", False, f"Processing failed: {data.get('error', 'Unknown error')}")
+        else:
+            self.log_test("Data Processing", False, f"Status: {status_code}, Data: {data}")
+    
     def run_all_tests(self):
         """Run all backend tests"""
         print("=" * 60)

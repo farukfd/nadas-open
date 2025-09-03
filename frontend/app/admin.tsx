@@ -550,6 +550,113 @@ export default function AdminPanel() {
     }).format(amount);
   };
 
+  // CSV Upload Functions
+  const selectAndUploadCSV = async () => {
+    Alert.alert(
+      'CSV Veri Tipi Seç',
+      'Hangi tür veri yüklemek istiyorsunuz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        { 
+          text: '👥 Kullanıcılar', 
+          onPress: () => promptForCSVContent('users')
+        },
+        { 
+          text: '📍 Lokasyonlar', 
+          onPress: () => promptForCSVContent('locations')
+        },
+        { 
+          text: '💰 Fiyatlar', 
+          onPress: () => promptForCSVContent('prices')
+        }
+      ]
+    );
+  };
+
+  const promptForCSVContent = (dataType: string) => {
+    Alert.prompt(
+      'CSV İçeriği',
+      `${dataType} için CSV verilerini yapıştırın (Base64 encoded):`,
+      [
+        { text: 'İptal', style: 'cancel' },
+        { 
+          text: 'Yükle',
+          onPress: (content) => {
+            if (content) {
+              const mockFile = {
+                name: `${dataType}_data.csv`,
+                content: content.trim(),
+                type: dataType,
+                rows: content.split('\n').length - 1 // Approximate row count
+              };
+              setCsvFile(mockFile);
+            }
+          }
+        }
+      ],
+      'plain-text'
+    );
+  };
+
+  const processCSV = async () => {
+    if (!csvFile) {
+      Alert.alert('Hata', 'Önce CSV dosyası seçin!');
+      return;
+    }
+
+    setIsUploadingCSV(true);
+    setCsvResult(null);
+
+    try {
+      const adminToken = await AsyncStorage.getItem('admin_token');
+      if (!adminToken) {
+        Alert.alert('Hata', 'Admin token bulunamadı. Lütfen tekrar giriş yapın.');
+        return;
+      }
+
+      const response = await fetch(`${EXPO_BACKEND_URL}/api/admin/data/upload-csv`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${adminToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          file_content: csvFile.content,
+          file_name: csvFile.name,
+          data_type: csvFile.type
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setCsvResult({
+          success: true,
+          ...data
+        });
+        Alert.alert(
+          '✅ CSV İşlendi!',
+          `${data.records_processed} kayıt başarıyla eklendi.\n${data.errors_count} hata bulundu.`
+        );
+      } else {
+        setCsvResult({
+          success: false,
+          error: data.detail || 'CSV işleme hatası'
+        });
+        Alert.alert('Hata', data.detail || 'CSV işlenemedi.');
+      }
+    } catch (error) {
+      console.error('CSV upload error:', error);
+      setCsvResult({
+        success: false,
+        error: 'Bağlantı hatası'
+      });
+      Alert.alert('Hata', 'CSV yükleme sırasında bağlantı hatası oluştu.');
+    } finally {
+      setIsUploadingCSV(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>

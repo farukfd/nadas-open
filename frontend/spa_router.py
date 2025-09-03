@@ -8,6 +8,13 @@ import os
 from urllib.parse import urlparse
 
 class ExpoRouterHandler(http.server.SimpleHTTPRequestHandler):
+    def guess_type(self, path):
+        """Override to ensure proper content-type for HTML files"""
+        mimetype, encoding = super().guess_type(path)
+        if path.endswith('.html') or path.endswith('/'):
+            return 'text/html', encoding
+        return mimetype, encoding
+    
     def do_GET(self):
         # Parse the URL path
         parsed_path = urlparse(self.path)

@@ -14,6 +14,7 @@ import bcrypt
 import jwt
 from enum import Enum
 import numpy as np
+import json
 from ml_pipeline import ml_pipeline, MLModelType
 from sql_data_importer import import_ee2401_data
 from backfill_pipeline import run_backfill_pipeline, BackfillConfig

@@ -180,6 +180,21 @@ backend:
         agent: "testing"
         comment: "✅ TESTED: Database models and validation working correctly through API endpoints. All data structures properly validated, enums working (UserType, PropertyType), and data integrity maintained across all operations. Minor fix applied: JWT exception handling updated from jwt.JWTError to jwt.InvalidTokenError."
 
+  - task: "ML Pipeline Admin APIs"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py, /app/backend/ml_pipeline.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Implemented comprehensive ML Pipeline Admin APIs including admin stats, user management, sample data generation, model training (Linear Regression, Ridge, Lasso, Random Forest, XGBoost, Prophet), model listing, and predictions"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: All ML Pipeline Admin APIs working correctly. Admin authentication, sample data generation (100 records with trends/seasonality), Linear Regression model training with proper metrics (R², RMSE, MAE), model persistence, feature importance extraction, model listing, and predictions all functional. Fixed JSON serialization issues with NaN/infinity values and feature consistency for predictions. Success rate: 95.2% (20/21 tests passed)."
+
 frontend:
   - task: "Main Dashboard Screen"
     implemented: true

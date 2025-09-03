@@ -10,7 +10,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Get backend URL from environment
-BACKEND_URL = "https://realestate-index.preview.emergentagent.com/api"
+BACKEND_URL = "https://realestate-index-1.preview.emergentagent.com/api"
 
 class BackendTester:
     def __init__(self):

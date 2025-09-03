@@ -537,7 +537,7 @@ class BackendTester:
         headers = {"Authorization": f"Bearer {self.auth_token}"}
         
         print("\n🔄 Starting real data import (this may take several minutes)...")
-        success, data, status_code = self.make_request("POST", "/admin/data/import-real", {}, headers)
+        success, data, status_code = self.make_request("POST", "/admin/data/import-real", {}, headers, timeout=600)  # 10 minute timeout
         
         if success and status_code == 200:
             if data.get("success"):
@@ -563,7 +563,7 @@ class BackendTester:
             return
         
         headers = {"Authorization": f"Bearer {self.auth_token}"}
-        success, data, status_code = self.make_request("GET", "/admin/data/collections-info", headers=headers)
+        success, data, status_code = self.make_request("GET", "/admin/data/collections-info", headers=headers, timeout=60)
         
         if success and status_code == 200:
             if data.get("success"):

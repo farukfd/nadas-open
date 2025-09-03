@@ -1151,12 +1151,12 @@ async def upload_csv_data(
         
         return {
             "message": "CSV yükleme tamamlandı",
-            "file_name": file_name,
+            "file_name": request.file_name,
             "total_rows": len(df),
             "records_processed": records_processed,
             "errors_count": len(errors),
             "errors": errors[:10] if errors else [],  # First 10 errors only
-            "data_type": data_type
+            "data_type": request.data_type
         }
         
     except pd.errors.EmptyDataError:

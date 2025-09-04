@@ -499,8 +499,8 @@ test_csv3@example.com,Ayşe,Demir,individual"""
     
     def test_ml_predictions(self):
         """Test ML model predictions"""
-        if not self.auth_token:
-            self.log_test("ML Predictions", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("ML Predictions", False, "No admin token available")
             return
         
         # Check if we have a trained model from previous test
@@ -508,7 +508,7 @@ test_csv3@example.com,Ayşe,Demir,individual"""
             self.log_test("ML Predictions", False, "No trained model available for predictions")
             return
         
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
         # Create prediction data (similar to training data structure)
         prediction_data = [
@@ -554,11 +554,11 @@ test_csv3@example.com,Ayşe,Demir,individual"""
     
     def test_ml_error_handling(self):
         """Test ML pipeline error handling"""
-        if not self.auth_token:
-            self.log_test("ML Error Handling", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("ML Error Handling", False, "No admin token available")
             return
         
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
         # Test invalid model type
         invalid_training_request = {
@@ -578,11 +578,11 @@ test_csv3@example.com,Ayşe,Demir,individual"""
     
     def test_data_processing(self):
         """Test data processing endpoint"""
-        if not self.auth_token:
-            self.log_test("Data Processing", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("Data Processing", False, "No admin token available")
             return
         
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
         # Test data processing with sample data
         processing_request = {
@@ -612,11 +612,11 @@ test_csv3@example.com,Ayşe,Demir,individual"""
     
     def test_real_data_import(self):
         """Test real data import from ee2401_db.sql (FAZ 2.1)"""
-        if not self.auth_token:
-            self.log_test("Real Data Import", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("Real Data Import", False, "No admin token available")
             return
         
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
         print("\n🔄 Starting real data import (this may take several minutes)...")
         success, data, status_code = self.make_request("POST", "/admin/data/import-real", {}, headers, timeout=600)  # 10 minute timeout
@@ -640,11 +640,11 @@ test_csv3@example.com,Ayşe,Demir,individual"""
     
     def test_collections_info(self):
         """Test collections info API after real data import (FAZ 2.1)"""
-        if not self.auth_token:
-            self.log_test("Collections Info", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("Collections Info", False, "No admin token available")
             return
         
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         success, data, status_code = self.make_request("GET", "/admin/data/collections-info", headers=headers, timeout=60)
         
         if success and status_code == 200:

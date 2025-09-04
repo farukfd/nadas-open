@@ -406,11 +406,11 @@ test_csv3@example.com,Ayşe,Demir,individual"""
     
     def test_sample_data_generation(self):
         """Test sample data generation for ML training"""
-        if not self.auth_token:
-            self.log_test("Sample Data Generation", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("Sample Data Generation", False, "No admin token available")
             return
             
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         success, data, status_code = self.make_request("GET", "/admin/data/sample", headers=headers)
         
         if success and status_code == 200:
@@ -434,12 +434,12 @@ test_csv3@example.com,Ayşe,Demir,individual"""
     
     def test_ml_model_training(self):
         """Test ML model training with Linear Regression"""
-        if not self.auth_token:
-            self.log_test("ML Model Training", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("ML Model Training", False, "No admin token available")
             return
         
         # First get sample data
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         success, sample_response, status_code = self.make_request("GET", "/admin/data/sample", headers=headers)
         
         if not success or status_code != 200:
@@ -484,11 +484,11 @@ test_csv3@example.com,Ayşe,Demir,individual"""
     
     def test_ml_model_listing(self):
         """Test ML model listing endpoint"""
-        if not self.auth_token:
-            self.log_test("ML Model Listing", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("ML Model Listing", False, "No admin token available")
             return
             
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         success, data, status_code = self.make_request("GET", "/admin/models", headers=headers)
         
         if success and status_code == 200:

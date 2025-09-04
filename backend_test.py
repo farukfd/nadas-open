@@ -919,11 +919,11 @@ test_csv3@example.com,Ayşe,Demir,individual"""
     
     def test_backfill_results_retrieval(self):
         """Test backfill results retrieval API"""
-        if not self.auth_token:
-            self.log_test("Backfill Results Retrieval", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("Backfill Results Retrieval", False, "No admin token available")
             return
         
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
         # Test getting backfill results
         endpoint = "/admin/backfill/results"
@@ -963,49 +963,45 @@ test_csv3@example.com,Ayşe,Demir,individual"""
     
     def test_backfill_visualization(self):
         """Test backfill visualization API"""
-        if not self.auth_token:
-            self.log_test("Backfill Visualization", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("Backfill Visualization", False, "No admin token available")
             return
         
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
         # Test visualization for Istanbul location
         test_location = "34001"  # Istanbul location code
+        test_session = "test_session_123"  # Use a test session ID
         
-        success, data, status_code = self.make_request("GET", f"/admin/backfill/visualization?location_code={test_location}", headers=headers, timeout=60)
+        success, data, status_code = self.make_request("GET", f"/admin/backfill/visualization?location_code={test_location}&session_id={test_session}", headers=headers, timeout=60)
         
         if success and status_code == 200:
-            if data.get("success"):
-                visualization_data = data.get("data", {})
-                chart_json = data.get("chart")
-                stats = data.get("statistics", {})
-                
-                historical_count = stats.get("historical_count", 0)
-                predicted_count = stats.get("predicted_count", 0)
-                avg_confidence = stats.get("avg_confidence", 0)
-                
-                # Check if we have both historical and predicted data
-                if chart_json and (historical_count > 0 or predicted_count > 0):
-                    self.log_test("Backfill Visualization", True, 
-                                f"Location {test_location}: {historical_count} historical + {predicted_count} predicted records, avg confidence: {avg_confidence:.3f}")
-                else:
-                    self.log_test("Backfill Visualization", False, 
-                                f"No visualization data for location {test_location}")
+            visualization = data.get("visualization")
+            stats = data.get("statistics", {})
+            
+            historical_count = stats.get("historical_count", 0)
+            predicted_count = stats.get("predicted_count", 0)
+            
+            # Check if we have visualization data
+            if visualization and (historical_count > 0 or predicted_count > 0):
+                self.log_test("Backfill Visualization", True, 
+                            f"Location {test_location}: {historical_count} historical + {predicted_count} predicted records")
             else:
-                self.log_test("Backfill Visualization", False, f"Visualization failed: {data.get('error', 'Unknown error')}")
+                self.log_test("Backfill Visualization", False, 
+                            f"No visualization data for location {test_location}")
         else:
             self.log_test("Backfill Visualization", False, f"Status: {status_code}, Data: {data}")
     
     def test_backfill_macro_features(self):
         """Test makro economic features integration in backfill"""
-        if not self.auth_token:
-            self.log_test("Backfill Macro Features", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("Backfill Macro Features", False, "No admin token available")
             return
         
         # This test verifies that macro features (TÜFE, interest rates, USD/TRY) are working
         # by running a small backfill and checking if the system handles macro data
         
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
         # Test with a very small date range to check macro feature integration
         macro_test_request = {
@@ -1042,11 +1038,11 @@ test_csv3@example.com,Ayşe,Demir,individual"""
     
     def test_backfill_confidence_scoring(self):
         """Test confidence scoring system in backfill predictions"""
-        if not self.auth_token:
-            self.log_test("Backfill Confidence Scoring", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("Backfill Confidence Scoring", False, "No admin token available")
             return
         
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
         # Get recent backfill results to check confidence scores
         success, data, status_code = self.make_request("GET", "/admin/backfill/results", headers=headers)
@@ -1082,11 +1078,11 @@ test_csv3@example.com,Ayşe,Demir,individual"""
     
     def test_backfill_data_quality(self):
         """Test data quality and integrity in backfill system"""
-        if not self.auth_token:
-            self.log_test("Backfill Data Quality", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("Backfill Data Quality", False, "No admin token available")
             return
         
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
         # Test with invalid date ranges to check error handling
         invalid_requests = [
@@ -1129,11 +1125,11 @@ test_csv3@example.com,Ayşe,Demir,individual"""
     
     def test_backfill_performance_large_dataset(self):
         """Test backfill system performance with large dataset"""
-        if not self.auth_token:
-            self.log_test("Backfill Performance", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("Backfill Performance", False, "No admin token available")
             return
         
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
         # Test performance with a reasonable date range
         performance_request = {

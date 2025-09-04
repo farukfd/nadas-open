@@ -323,13 +323,16 @@ export default function AdminPanel() {
   const loadRealData = async () => {
     setIsLoadingData(true);
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) return;
+      const adminToken = await AsyncStorage.getItem('admin_token');
+      if (!adminToken) {
+        Alert.alert('Hata', 'Admin token bulunamadı. Lütfen tekrar giriş yapın.');
+        return;
+      }
 
       const response = await fetch(`${EXPO_BACKEND_URL}/api/admin/data/import-real`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${JSON.parse(token)}`,
+          'Authorization': `Bearer ${adminToken}`,
           'Content-Type': 'application/json',
         },
       });

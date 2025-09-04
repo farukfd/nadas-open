@@ -1191,13 +1191,22 @@ test_csv3@example.com,Ayşe,Demir,individual"""
         self.test_query_limits()
         self.test_authentication_errors()
         
+        # Admin Authentication & Panel Tests
+        print("\n" + "=" * 50)
+        print("ADMIN AUTHENTICATION & PANEL TESTS")
+        print("=" * 50)
+        
+        self.test_admin_login()
+        self.test_admin_token_validation()
+        self.test_admin_stats()
+        self.test_admin_users()
+        self.test_csv_upload_feature()
+        
         # ML Pipeline Admin API tests
         print("\n" + "=" * 40)
         print("ML PIPELINE ADMIN API TESTS")
         print("=" * 40)
         
-        self.test_admin_stats()
-        self.test_admin_users()
         self.test_sample_data_generation()
         self.test_data_processing()
         self.test_ml_model_training()

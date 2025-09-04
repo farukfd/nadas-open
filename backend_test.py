@@ -16,6 +16,7 @@ class BackendTester:
     def __init__(self):
         self.base_url = BACKEND_URL
         self.auth_token = None
+        self.admin_token = None  # Add admin token storage
         self.test_results = []
         
     def log_test(self, test_name: str, success: bool, details: str = ""):

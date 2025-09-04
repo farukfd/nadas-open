@@ -288,6 +288,49 @@ class BackendTester:
         else:
             self.log_test("Missing Token Handling", False, f"Expected 401/403, got {status_code}")
     
+    def test_admin_login(self):
+        """Test admin authentication with superadmin credentials"""
+        admin_credentials = {
+            "username": "superadmin",
+            "password": "emlakadmin2025"
+        }
+        
+        success, data, status_code = self.make_request("POST", "/admin/login", admin_credentials)
+        
+        if success and status_code == 200 and "token" in data:
+            self.admin_token = data["token"]
+            admin_info = data.get("admin", {})
+            self.log_test("Admin Login", True, f"Admin: {admin_info.get('username')}, Type: {admin_info.get('type')}")
+        else:
+            self.log_test("Admin Login", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_admin_token_validation(self):
+        """Test admin token validation and access control"""
+        if not self.admin_token:
+            self.log_test("Admin Token Validation", False, "No admin token available")
+            return
+        
+        # Test admin access with valid token
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        success, data, status_code = self.make_request("GET", "/admin/stats", headers=headers)
+        
+        if success and status_code == 200:
+            self.log_test("Admin Token Validation", True, "Admin token properly validated")
+        else:
+            self.log_test("Admin Token Validation", False, f"Admin token validation failed: {status_code}")
+        
+        # Test non-admin user trying to access admin endpoints
+        if self.auth_token:  # Regular user token
+            headers = {"Authorization": f"Bearer {self.auth_token}"}
+            success, data, status_code = self.make_request("GET", "/admin/stats", headers=headers)
+            
+            if status_code == 403:
+                self.log_test("Admin Access Control", True, "Non-admin users properly blocked from admin endpoints")
+            else:
+                self.log_test("Admin Access Control", False, f"Access control failed: {status_code}")
+        else:
+            self.log_test("Admin Access Control", False, "No regular user token to test access control")
+    
     def test_admin_stats(self):
         """Test admin dashboard statistics endpoint"""
         if not self.auth_token:

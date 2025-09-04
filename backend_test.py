@@ -840,11 +840,11 @@ test_csv3@example.com,Ayşe,Demir,individual"""
     
     def test_backfill_detect_missing_periods(self):
         """Test eksik dönem tespiti API (Backfill System)"""
-        if not self.auth_token:
-            self.log_test("Backfill Missing Period Detection", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("Backfill Missing Period Detection", False, "No admin token available")
             return
         
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
         # Test missing period detection
         detection_request = {
@@ -877,11 +877,11 @@ test_csv3@example.com,Ayşe,Demir,individual"""
     
     def test_backfill_pipeline_execution(self):
         """Test backfill pipeline execution (ML prediction process)"""
-        if not self.auth_token:
-            self.log_test("Backfill Pipeline Execution", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("Backfill Pipeline Execution", False, "No admin token available")
             return
         
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         
         # Test backfill pipeline with Prophet + XGBoost models
         backfill_request = {

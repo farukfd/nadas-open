@@ -439,6 +439,8 @@ agent_communication:
     message: "Created comprehensive real estate price index mobile app with user authentication, query limits, Turkish location data, and price analytics. Backend has full API with sample data. Frontend has complete navigation flow. Ready for backend testing to verify all API endpoints work correctly."
   - agent: "user"
     message: "NEW ISSUES REPORTED: 1) Doğrulama kodu çalışmıyor (verification code not working) 2) Admin paneli Error 404 - File not found (admin panel showing 404 errors) 3) Need free SMS verification and CSV upload capability for admin panel"
+  - agent: "user"
+    message: "URGENT: Admin paneline giriş yapılıyor ama veri yükleme gibi özellikler çalışmıyor - admin panel login works but data loading and other features inside not working"
   - agent: "testing"
     message: "✅ BACKEND TESTING COMPLETE: All major backend functionality tested and working correctly. Success rate: 92.3% (12/13 tests passed). Fixed minor JWT exception handling issue. All API endpoints functional: authentication (register/login/profile), location hierarchy (cities/districts/neighborhoods), price queries (guest/protected), query limits enforcement, and proper error handling. Sample data properly seeded with 6120+ price records. System ready for production use."
   - agent: "testing"

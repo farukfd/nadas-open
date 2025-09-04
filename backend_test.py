@@ -333,11 +333,11 @@ class BackendTester:
     
     def test_admin_stats(self):
         """Test admin dashboard statistics endpoint"""
-        if not self.auth_token:
-            self.log_test("Admin Stats", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("Admin Stats", False, "No admin token available")
             return
             
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         success, data, status_code = self.make_request("GET", "/admin/stats", headers=headers)
         
         if success and status_code == 200:
@@ -353,11 +353,11 @@ class BackendTester:
     
     def test_admin_users(self):
         """Test admin users management endpoint"""
-        if not self.auth_token:
-            self.log_test("Admin Users", False, "No auth token available")
+        if not self.admin_token:
+            self.log_test("Admin Users", False, "No admin token available")
             return
             
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
         success, data, status_code = self.make_request("GET", "/admin/users", headers=headers)
         
         if success and status_code == 200 and "users" in data:
@@ -365,6 +365,44 @@ class BackendTester:
             self.log_test("Admin Users", True, f"Retrieved {len(users)} users")
         else:
             self.log_test("Admin Users", False, f"Status: {status_code}, Data: {data}")
+    
+    def test_csv_upload_feature(self):
+        """Test CSV upload functionality for admin panel"""
+        if not self.admin_token:
+            self.log_test("CSV Upload Feature", False, "No admin token available")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.admin_token}"}
+        
+        # Create sample CSV data for users
+        import base64
+        csv_content = """email,first_name,last_name,user_type
+test_csv1@example.com,Ahmet,Yılmaz,individual
+test_csv2@example.com,Mehmet,Özkan,corporate
+test_csv3@example.com,Ayşe,Demir,individual"""
+        
+        # Encode to base64
+        csv_base64 = base64.b64encode(csv_content.encode('utf-8')).decode('utf-8')
+        
+        upload_request = {
+            "file_content": csv_base64,
+            "file_name": "test_users.csv",
+            "data_type": "users"
+        }
+        
+        success, data, status_code = self.make_request("POST", "/admin/data/upload-csv", upload_request, headers)
+        
+        if success and status_code == 200:
+            records_processed = data.get("records_processed", 0)
+            total_rows = data.get("total_rows", 0)
+            errors_count = data.get("errors_count", 0)
+            
+            if records_processed > 0:
+                self.log_test("CSV Upload Feature", True, f"Processed {records_processed}/{total_rows} records, {errors_count} errors")
+            else:
+                self.log_test("CSV Upload Feature", False, f"No records processed from CSV upload")
+        else:
+            self.log_test("CSV Upload Feature", False, f"Status: {status_code}, Data: {data}")
     
     def test_sample_data_generation(self):
         """Test sample data generation for ML training"""

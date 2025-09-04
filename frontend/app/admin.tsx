@@ -461,7 +461,7 @@ export default function AdminPanel() {
         `${EXPO_BACKEND_URL}/api/admin/backfill/visualization?location_code=${locationCode}`, 
         {
           headers: {
-            'Authorization': `Bearer ${JSON.parse(token)}`,
+            'Authorization': `Bearer ${adminToken}`,
             'Content-Type': 'application/json',
           },
         }

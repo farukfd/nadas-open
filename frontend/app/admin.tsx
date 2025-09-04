@@ -454,8 +454,8 @@ export default function AdminPanel() {
 
   const getBackfillVisualization = async (locationCode: string) => {
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) return;
+      const adminToken = await AsyncStorage.getItem('admin_token');
+      if (!adminToken) return;
 
       const response = await fetch(
         `${EXPO_BACKEND_URL}/api/admin/backfill/visualization?location_code=${locationCode}`, 
